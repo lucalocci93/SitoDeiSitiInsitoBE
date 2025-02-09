@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using Identity.DTOs;
 using SitoDeiSiti.DAL.Models;
+using SitoDeiSiti.DTOs;
 
 namespace Identity.Models.Mapper
 {

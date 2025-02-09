@@ -1,6 +1,5 @@
-﻿using Identity.Models;
-
-namespace Identity.DTOs
+﻿
+namespace SitoDeiSiti.DTOs
 {
     public class User
     {

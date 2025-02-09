@@ -1,4 +1,4 @@
-﻿namespace Identity.Models
+﻿namespace SitoDeiSiti.DTOs
 {
     public class JWT
     {

@@ -1,9 +1,9 @@
-﻿using Identity.DTOs;
-using Identity.Models;
+﻿using Identity.Models;
 using Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SitoDeiSitiService.DTOs;
+using SitoDeiSiti.DTOs;
+using SitoDeiSiti.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 

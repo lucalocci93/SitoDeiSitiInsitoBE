@@ -1,6 +1,6 @@
 ﻿using AutoMapper;
-using Identity.DTOs;
 using SitoDeiSiti.DAL.Models;
+using SitoDeiSiti.DTOs;
 
 namespace Identity.Models.Mapper
 {
@@ -18,7 +18,7 @@ namespace Identity.Models.Mapper
             CreateMap<Document, Documento>()
                 .ForMember(dest => dest.TipoDocumentoId, opt => opt.MapFrom(src => src.idTipoDocumento))
                 .ForMember(dest => dest.NomeDocumento, opt => opt.MapFrom(src => src.nomeDocumento))
-                .ForMember(dest => dest.DataCaricamento, opt => opt.MapFrom(src => src.dataCaricamento.HasValue ? src.dataCaricamento.Value : DateOnly.FromDateTime(DateTime.Today)));
+                .ForMember(dest => dest.DataCaricamento, opt => opt.MapFrom(src => src.dataCaricamento.HasValue ? src.dataCaricamento.Value : DateTime.Today));
                 //.ForMember(dest => dest.DatiDocumento, opt => opt.MapFrom(src => src.DatiDocumento));
 
             CreateMap<Documento, DocumentExt>()

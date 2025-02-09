@@ -1,14 +1,14 @@
 ﻿using AutoMapper;
-using Identity.Models.ConfigSettings;
-using Identity.Models;
 using Microsoft.Extensions.Options;
 using Identity.Interfaces;
-using Identity.DTOs;
 using Microsoft.EntityFrameworkCore;
 using SitoDeiSiti.DAL.Interface;
 using SitoDeiSiti.DAL;
 using Microsoft.EntityFrameworkCore.ValueGeneration;
 using SitoDeiSiti.DAL.Models;
+using SitoDeiSiti.Models.ConfigSettings;
+using SitoDeiSiti.DTOs;
+using SitoDeiSiti.Models;
 
 namespace Identity.Services
 {
@@ -56,7 +56,7 @@ namespace Identity.Services
                     UtenteId = document.rowGuid,
                     TipoDocumentoId = document.idTipoDocumento,
                     NomeDocumento = document.nomeDocumento,
-                    DataCaricamento = document.dataCaricamento.HasValue ? document.dataCaricamento.Value : DateOnly.FromDateTime(DateTime.Today),
+                    DataCaricamento = document.dataCaricamento.HasValue ? document.dataCaricamento.Value : DateTime.Today,
                     DatiDocumento = Convert.FromBase64String(document.datiDocumento)
                 };
 

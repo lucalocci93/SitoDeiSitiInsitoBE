@@ -1,40 +1,56 @@
 ﻿using AutoMapper;
-using Identity.Models.ConfigSettings;
-using Identity.Models;
 using Microsoft.Extensions.Options;
 using Identity.Interfaces;
-using Identity.DTOs;
 using Microsoft.EntityFrameworkCore;
-using Error = Identity.Models.Error;
 using DAL.Enums;
 using SitoDeiSiti.DAL.Interface;
 using SitoDeiSiti.DAL;
 using SitoDeiSiti.DAL.Models;
+using SitoDeiSiti.DTOs;
+using SitoDeiSiti.ExternalUtils;
+using SitoDeiSiti.ExternalUtils.Models.SumUp;
+using SitoDeiSiti.Models.ConfigSettings;
+using SitoDeiSiti.Models;
 
 namespace Identity.Services
 {
     public class AbbonamentoManager : BaseManager, ISubscription
     {
         private readonly IDalAbbonamenti dalAbbonamenti;
-        public AbbonamentoManager(IOptions<Token> options,SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager)
+        private readonly IDalUtente dalUtente;
+        private readonly IOptions<SumUp> SumUpOptions;
+
+        public AbbonamentoManager(IOptions<Token> options, IOptions<SumUp> sumUpOptions, SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager)
             : base(options, mapper, cacheManager)
         {
             dalAbbonamenti = new DalAbbonamenti(context);
+            dalUtente = new DalUtenti(context);
+            SumUpOptions = sumUpOptions;
         }
 
         public async Task<Response<Subscription>> AddAbbonamentoUser(Subscription subscription)
         {
             int AddRow = 0;
             try
-            {   
+            {
+                User utente = Mapper.Map<Utente, User>(await dalUtente.GetUtente(subscription.Utente).ConfigureAwait(false));
+
+                //if (string.IsNullOrEmpty(subscription.UrlPagamento))
+                //{
+                //    if (!await ManagePayment(subscription, utente))
+                //    {
+                //        return new Response<Subscription>(false, new Error("Errore generazione Url Pagamento"));
+                //    }
+                //}
+
                 List<SubscriptionType> TipiAbbonamento = (await GetTipiAbbonamento().ConfigureAwait(false)).Data;
 
-                subscription.DataScadenza = GetDataScadenzaAbbonamento(TipiAbbonamento.FirstOrDefault(t => t.Id == subscription.IdTipoAbbonamento), subscription.DataIscrizione);
+                //subscription.DataScadenza = GetDataScadenzaAbbonamento(TipiAbbonamento.FirstOrDefault(t => t.Id == subscription.IdTipoAbbonamento), subscription.DataIscrizione);
 
                 Abbonamento abbonamento = Mapper.Map<Subscription, Abbonamento>(subscription);
 
                 AddRow = await dalAbbonamenti.AddAbbonamenti(abbonamento).ConfigureAwait(false);
-                
+
                 if (AddRow > 0)
                 {
                     return new Response<Subscription>(true, subscription);
@@ -57,7 +73,7 @@ namespace Identity.Services
             if (subscriptionType == null)
                 throw new ArgumentNullException("Tipo Abbonamento non valido");
 
-            if (subscriptionType.ScadGiornaliera )
+            if (subscriptionType.ScadGiornaliera)
             {
                 if (!subscriptionType.GiorniDurata.HasValue)
                 {
@@ -81,7 +97,7 @@ namespace Identity.Services
                 }
             }
 
-            if(!subscriptionType.ScadMensile && !subscriptionType.ScadSettimanale &&
+            if (!subscriptionType.ScadMensile && !subscriptionType.ScadSettimanale &&
                 subscriptionType.ScadGiornaliera && subscriptionType.GiorniDurata.HasValue)
             {
                 DataScadenza = dataIscrizione.AddDays(subscriptionType.GiorniDurata.Value);
@@ -100,7 +116,7 @@ namespace Identity.Services
 
                 RowInserted = await dalAbbonamenti.AddTipoAbbonamento(tipoAbbonamento).ConfigureAwait(false);
 
-                if(RowInserted > 0)
+                if (RowInserted > 0)
                 {
                     return new Response<SubscriptionType>(true, subscriptionType);
                 }
@@ -109,7 +125,7 @@ namespace Identity.Services
                     return new Response<SubscriptionType>(false, subscriptionType);
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new Response<SubscriptionType>(false, new Error(ex.Message));
             }
@@ -122,6 +138,28 @@ namespace Identity.Services
             try
             {
                 ListaAbbonamenti = await dalAbbonamenti.GetAbbonamentiUtente(utente).ConfigureAwait(false);
+
+                foreach(var sub in ListaAbbonamenti.Where(a => a.Pagato.HasValue && a.Pagato.Value && (!a.Attivo.HasValue || !a.Attivo.Value)))
+                {
+                    if (sub.DataIscrizione.HasValue && sub.DataIscrizione.Value <= DateTime.Now
+                    && (!sub.DataScadenza.HasValue || (sub.DataScadenza.HasValue && sub.DataScadenza >= DateTime.Now)))
+                    {
+                        sub.Attivo = true;
+                        await dalAbbonamenti.UpdateAbbonamento(DbOperationsAbbonamentoEnums.AggiornaStatoAbbonamento, sub, sub.TipoAbbonamentoNavigation).ConfigureAwait(false);
+                    }
+                }
+
+                foreach(var sub in ListaAbbonamenti.Where(a => (a.Pagato.HasValue && !a.Pagato.Value)))
+                {
+                    if(sub.DataScadenza.HasValue && sub.DataScadenza >= DateTime.Now)
+                    {
+                        User user = Mapper.Map<Utente, User>(await dalUtente.GetUtente(sub.Utente).ConfigureAwait(false));
+
+                        sub.IdCheckout = Guid.NewGuid().ToString();
+                        sub.UrlPagamento = await GetPaymentUrl(sub, user).ConfigureAwait(false);
+                        await dalAbbonamenti.UpdateAbbonamento(DbOperationsAbbonamentoEnums.AggiornaInfoPagamento, sub, sub.TipoAbbonamentoNavigation).ConfigureAwait(false);
+                    }
+                }
 
                 SubscriptionList = Mapper.Map<List<Abbonamento>, List<Subscription>>(ListaAbbonamenti);
 
@@ -141,7 +179,7 @@ namespace Identity.Services
             {
                 Abbonamento? abbonamento = await dalAbbonamenti.GetAbbonamento(utente, Id).ConfigureAwait(false);
 
-                if(abbonamento != null)
+                if (abbonamento != null)
                 {
                     subscription = Mapper.Map<Abbonamento, Subscription>(abbonamento);
 
@@ -214,7 +252,7 @@ namespace Identity.Services
             }
         }
 
-        public async Task<Response<Subscription>> UpdateAbbonamentoUser(DbOperationsAbbonamentoEnums operation, Guid Utente, Subscription subscription)
+        public async Task<Response<Subscription>> UpdateAbbonamentoUser(DbOperationsAbbonamentoEnums operation, Subscription subscription)
         {
             int RowUpdated = 0;
             try
@@ -222,12 +260,113 @@ namespace Identity.Services
                 Abbonamento abbonamento = Mapper.Map<Subscription, Abbonamento>(subscription);
                 TipoAbbonamento tipoAbbonamento = Mapper.Map<Subscription, TipoAbbonamento>(subscription);
 
-                RowUpdated = await dalAbbonamenti.UpdateAbbonamento(operation, Utente, abbonamento, tipoAbbonamento).ConfigureAwait(false);
+                RowUpdated = await dalAbbonamenti.UpdateAbbonamento(operation, abbonamento, tipoAbbonamento).ConfigureAwait(false);
+                
+                //TODO invio mail in caso di notifica pagamento
+
                 return new Response<Subscription>(true, subscription);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return new Response<Subscription>(false, new Error(ex.Message));
+            }
+        }
+
+        private async Task<bool> ManagePayment(Subscription subscription, SitoDeiSiti.DTOs.User utente)
+        {
+            try
+            {
+                subscription.IdCheckout = Guid.NewGuid().ToString();
+                SumUpManager manager = new SumUpManager();
+
+                string key = "SumUpToken";
+                SumUpToken token = new();
+
+                SumUpToken cacheResult = await CacheManager.GetAsync<SumUpToken>(key);
+                if (cacheResult is null)
+                {
+                    token = await manager.SumUpAuth(SumUpOptions.Value.ClientId, SumUpOptions.Value.ClientSecret, SumUpOptions.Value.GrantType).ConfigureAwait(false);
+                    
+                    if(token is not null)
+                    {
+                        await CacheManager.SetAsync(key, token);
+                    }
+                }
+                else
+                {
+                    token = cacheResult;
+                }
+
+                HostedCheckoutInput input = new HostedCheckoutInput()
+                {
+                    amount = subscription.Importo.HasValue ? (double)subscription.Importo : 0,
+                    currency = "EUR",
+                    checkout_reference = subscription.IdCheckout,
+                    description = $"Pagamento Abbonamento {subscription.TipoAbbonamento} {utente.Nome} {utente.Cognome}",
+                    merchant_code = SumUpOptions.Value.MerchantCode
+                };
+
+                HostedCheckoutOutput checkoutOutput = await manager.CreateHostedCheckout(input, token.access_token).ConfigureAwait(false);
+
+                if(checkoutOutput is not null)
+                {
+                    subscription.UrlPagamento = checkoutOutput.hosted_checkout_url;
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                throw;
+            }
+        }
+
+        private async Task<string> GetPaymentUrl(Abbonamento subscription, User utente)
+        {
+            try
+            {
+                SumUpManager manager = new SumUpManager();
+                string key = "SumUpToken";
+                SumUpToken token = new();
+
+                SumUpToken cacheResult = await CacheManager.GetAsync<SumUpToken>(key);
+                if (cacheResult is null)
+                {
+                    token = await manager.SumUpAuth(SumUpOptions.Value.ClientId, SumUpOptions.Value.ClientSecret, SumUpOptions.Value.GrantType).ConfigureAwait(false);
+
+                    if (token is not null)
+                    {
+                        await CacheManager.SetAsync(key, token, TimeSpan.FromSeconds(token.expires_in - 1));
+                    }
+                }
+                else
+                {
+                    token = cacheResult;
+                }
+
+                HostedCheckoutInput input = new HostedCheckoutInput()
+                {
+                    amount = subscription.Importo.HasValue ? (double)subscription.Importo : 0,
+                    currency = "EUR",
+                    checkout_reference = subscription.IdCheckout,
+                    description = $"Pagamento Abbonamento {subscription.TipoAbbonamentoNavigation.Descrizione} {utente.Nome} {utente.Cognome}",
+                    merchant_code = SumUpOptions.Value.MerchantCode
+                };
+
+                HostedCheckoutOutput checkoutOutput = await manager.CreateHostedCheckout(input, token.access_token).ConfigureAwait(false);
+
+                if (checkoutOutput is not null)
+                {
+                    return checkoutOutput.hosted_checkout_url;
+                }
+
+                return string.Empty;
+
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
     }

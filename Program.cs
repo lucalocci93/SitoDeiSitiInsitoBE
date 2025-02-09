@@ -1,6 +1,3 @@
-using Identity.DTOs.ConfigSettings;
-using Identity.Models;
-using Identity.Models.ConfigSettings;
 using Identity.Models.Mapper;
 using Identity.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -8,6 +5,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SitoDeiSiti.DAL.Models;
+using SitoDeiSiti.DTOs;
+using SitoDeiSiti.DTOs.ConfigSettings;
+using SitoDeiSiti.Models.ConfigSettings;
 using SitoDeiSitiService.Models.Mapper;
 using System;
 using System.Text;
@@ -66,6 +66,7 @@ builder.Services.AddCors(options =>
 
 builder.Services.Configure<Token>(builder.Configuration.GetSection("Token"));
 builder.Services.Configure<Cache>(builder.Configuration.GetSection("Cache"));
+builder.Services.Configure<SumUp>(builder.Configuration.GetSection("SumUp"));
 
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<CacheManager>();

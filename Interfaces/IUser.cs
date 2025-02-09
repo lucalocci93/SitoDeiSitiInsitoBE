@@ -1,6 +1,6 @@
 ﻿using DAL.Enums;
-using Identity.DTOs;
-using Identity.Models;
+using SitoDeiSiti.DTOs;
+using SitoDeiSiti.Models;
 
 namespace Identity.Interfaces
 {

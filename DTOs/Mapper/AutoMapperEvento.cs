@@ -1,7 +1,7 @@
 ﻿using AutoMapper;
 using Identity.Models;
 using SitoDeiSiti.DAL.Models;
-using SitoDeiSitiService.DTOs;
+using SitoDeiSiti.DTOs;
 
 namespace SitoDeiSitiService.Models.Mapper
 {

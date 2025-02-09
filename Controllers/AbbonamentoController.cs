@@ -1,7 +1,8 @@
-﻿using Identity.DTOs;
+﻿using DAL.Enums;
 using Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SitoDeiSiti.DTOs;
 
 namespace Identity.Controllers
 {
@@ -111,6 +112,29 @@ namespace Identity.Controllers
         public async Task<ActionResult> GetSubscriptionType()
         {
             var resp = await abbonamentoManager.GetTipiAbbonamento();
+
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+        }
+
+        //[Authorize(Roles = "Admin")]
+        [HttpPut("UpdateSubscription/{operation}")]
+        public async Task<ActionResult> UpdateSubscription(DbOperationsAbbonamentoEnums operation, [FromBody] Subscription subscription)
+        {
+            var resp = await abbonamentoManager.UpdateAbbonamentoUser(operation, subscription).ConfigureAwait(false);
 
             if (resp != null)
             {

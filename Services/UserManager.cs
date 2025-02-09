@@ -1,15 +1,15 @@
 ﻿using AutoMapper;
 using DAL.Enums;
-using Identity.DTOs;
 using Identity.Interfaces;
-using Identity.Models;
-using Identity.Models.ConfigSettings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SitoDeiSiti.DAL;
 using SitoDeiSiti.DAL.Interface;
 using SitoDeiSiti.DAL.Models;
+using SitoDeiSiti.DTOs;
+using SitoDeiSiti.Models;
+using SitoDeiSiti.Models.ConfigSettings;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -102,7 +102,7 @@ namespace Identity.Services
                 }
                 else
                 {
-                    return new Response<JWT>(true, jwt);
+                    return new Response<JWT>(false, new Error("Utente o Password errati"));
                 }
             }
             catch (Exception ex)

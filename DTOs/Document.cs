@@ -1,14 +1,12 @@
 ﻿using Identity.Interfaces;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-
-namespace Identity.DTOs
+namespace SitoDeiSiti.DTOs
 {
     public class Document
     {
         public Guid? idDocumento { get; set; }
         public int idTipoDocumento { get; set; }
         public string nomeDocumento { get; set; }
-        public DateOnly? dataCaricamento { get; set; }
+        public DateTime? dataCaricamento { get; set; }
     }
 
     public class DocumentExt : Document

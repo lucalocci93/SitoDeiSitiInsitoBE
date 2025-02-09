@@ -1,4 +1,4 @@
-﻿namespace Identity.Models.ConfigSettings
+﻿namespace SitoDeiSiti.Models.ConfigSettings
 {
     public class Token
     {

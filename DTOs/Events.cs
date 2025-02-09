@@ -1,7 +1,6 @@
-﻿using Identity.DTOs;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
-namespace SitoDeiSitiService.DTOs
+namespace SitoDeiSiti.DTOs
 {
     public class Events
     {

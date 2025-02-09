@@ -1,6 +1,6 @@
 ﻿using DAL.Enums;
-using Identity.DTOs;
-using Identity.Models;
+using SitoDeiSiti.DTOs;
+using SitoDeiSiti.Models;
 
 namespace Identity.Interfaces
 {
@@ -12,6 +12,6 @@ namespace Identity.Interfaces
         public Task<Response<List<Subscription>>> GetAbbonamentiByUser(Guid Utente);
         public Task<Response<Subscription>> GetAbbonamento(Guid utente, int Id);
         public Task<Response<Subscription>> AddAbbonamentoUser(Subscription subscription);
-        public Task<Response<Subscription>> UpdateAbbonamentoUser(DbOperationsAbbonamentoEnums operation, Guid Utente, Subscription subscription);
+        public Task<Response<Subscription>> UpdateAbbonamentoUser(DbOperationsAbbonamentoEnums operation, Subscription subscription);
     }
 }

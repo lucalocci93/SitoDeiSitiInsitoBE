@@ -1,8 +1,7 @@
 ﻿using AutoMapper;
-using Identity.Models;
-using Identity.Models.ConfigSettings;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
+using SitoDeiSiti.Models.ConfigSettings;
 using System.Runtime;
 
 namespace Identity.Services

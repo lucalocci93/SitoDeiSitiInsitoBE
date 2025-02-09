@@ -1,11 +1,11 @@
 ﻿using DAL.Enums;
-using Identity.DTOs;
-using Identity.Models;
 using Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using SitoDeiSiti.DTOs;
+using SitoDeiSiti.Models;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -35,7 +35,7 @@ namespace Identity.Controllers
                     }
                     else
                     {
-                        return Ok(response.Data.Token);
+                        return Ok(response);
                     }
                 }
                 else

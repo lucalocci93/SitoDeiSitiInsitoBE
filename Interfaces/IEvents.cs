@@ -1,6 +1,5 @@
-﻿using Identity.DTOs;
-using Identity.Models;
-using SitoDeiSitiService.DTOs;
+﻿using SitoDeiSiti.DTOs;
+using SitoDeiSiti.Models;
 
 namespace SitoDeiSiti.Interfaces
 {

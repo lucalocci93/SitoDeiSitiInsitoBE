@@ -1,8 +1,4 @@
 ﻿using AutoMapper;
-using Identity.DTOs;
-using Identity.Interfaces;
-using Identity.Models;
-using Identity.Models.ConfigSettings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.ValueGeneration;
@@ -12,8 +8,10 @@ using OfficeOpenXml;
 using SitoDeiSiti.DAL;
 using SitoDeiSiti.DAL.Interface;
 using SitoDeiSiti.DAL.Models;
+using SitoDeiSiti.DTOs;
 using SitoDeiSiti.Interfaces;
-using SitoDeiSitiService.DTOs;
+using SitoDeiSiti.Models;
+using SitoDeiSiti.Models.ConfigSettings;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -46,8 +44,8 @@ namespace Identity.Services
                 evento.LuogoEvento = events.LuogoEvento;
                 evento.Descrizione = events.Descrizione;
                 evento.Link = events.Link;
-                evento.DataInizioEvento = DateOnly.FromDateTime(events.DataInizioEvento);
-                evento.DataFineEvento = DateOnly.FromDateTime(events.DataFineEvento);
+                evento.DataInizioEvento = events.DataInizioEvento;
+                evento.DataFineEvento = events.DataFineEvento;
                 evento.Categorie = JsonSerializer.Serialize(events.Categorie);
                 evento.Copertina = string.IsNullOrEmpty(events.Copertina.ImageData) ?
                         null : Convert.FromBase64String(events.Copertina.ImageData);
@@ -218,8 +216,8 @@ namespace Identity.Services
                     e.Descrizione = evento.Descrizione;
                     e.Link = evento.Link;
 
-                    e.DataInizioEvento = new DateOnly(evento.DataInizioEvento.Year, evento.DataInizioEvento.Month, evento.DataInizioEvento.Day);
-                    e.DataFineEvento = new DateOnly(evento.DataFineEvento.Year, evento.DataFineEvento.Month, evento.DataFineEvento.Day);
+                    e.DataInizioEvento = evento.DataInizioEvento;
+                    e.DataFineEvento = evento.DataFineEvento;
 
                     e.Categorie = JsonSerializer.Serialize(evento.Categorie);
 

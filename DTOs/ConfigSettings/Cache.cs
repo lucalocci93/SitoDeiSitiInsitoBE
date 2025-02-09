@@ -1,6 +1,4 @@
-﻿using Identity.Models;
-
-namespace Identity.DTOs.ConfigSettings
+﻿namespace SitoDeiSiti.DTOs.ConfigSettings
 {
     public class Cache
     {

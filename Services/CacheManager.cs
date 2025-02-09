@@ -1,10 +1,8 @@
 ﻿using AutoMapper;
 using Identity.Interfaces;
-using Identity.Models.ConfigSettings;
-using Identity.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
-using Identity.DTOs.ConfigSettings;
+using SitoDeiSiti.DTOs.ConfigSettings;
 
 namespace Identity.Services
 {
@@ -50,11 +48,18 @@ namespace Identity.Services
             throw new NotImplementedException();
         }
 
-        public Task<bool> SetAsync<T>(string key, T value)
+        public Task<bool> SetAsync<T>(string key, T value, TimeSpan? exp = null)
         {
             try
             {
-                MemoryCache.Set(key, value);
+                if (exp.HasValue)
+                {
+                    MemoryCache.Set(key, value, exp.Value);
+                }
+                else
+                {
+                    MemoryCache.Set(key, value);
+                }
 
                 return Task.FromResult(true);
             }
