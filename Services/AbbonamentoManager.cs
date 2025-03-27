@@ -7,10 +7,11 @@ using SitoDeiSiti.DAL.Interface;
 using SitoDeiSiti.DAL;
 using SitoDeiSiti.DAL.Models;
 using SitoDeiSiti.DTOs;
-using SitoDeiSiti.ExternalUtils;
-using SitoDeiSiti.ExternalUtils.Models.SumUp;
-using SitoDeiSiti.Models.ConfigSettings;
 using SitoDeiSiti.Models;
+using SitoDeiSiti.External.SumUp;
+using SitoDeiSiti.External.SumUp.Models.SumUp;
+using SitoDeiSiti.Utils.HTTPHandlers.Model;
+using SitoDeiSiti.External.SumUp.Interfaces;
 
 namespace Identity.Services
 {
@@ -18,14 +19,16 @@ namespace Identity.Services
     {
         private readonly IDalAbbonamenti dalAbbonamenti;
         private readonly IDalUtente dalUtente;
-        private readonly IOptions<SumUp> SumUpOptions;
 
-        public AbbonamentoManager(IOptions<Token> options, IOptions<SumUp> sumUpOptions, SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager)
-            : base(options, mapper, cacheManager)
+        private readonly SumUpManager sumUpManager;
+
+        public AbbonamentoManager(SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager,
+            SumUpManager _sumUpManager)
+            : base(mapper, cacheManager)
         {
             dalAbbonamenti = new DalAbbonamenti(context);
             dalUtente = new DalUtenti(context);
-            SumUpOptions = sumUpOptions;
+            sumUpManager = _sumUpManager;
         }
 
         public async Task<Response<Subscription>> AddAbbonamentoUser(Subscription subscription)
@@ -277,36 +280,17 @@ namespace Identity.Services
             try
             {
                 subscription.IdCheckout = Guid.NewGuid().ToString();
-                SumUpManager manager = new SumUpManager();
-
-                string key = "SumUpToken";
-                SumUpToken token = new();
-
-                SumUpToken cacheResult = await CacheManager.GetAsync<SumUpToken>(key);
-                if (cacheResult is null)
-                {
-                    token = await manager.SumUpAuth(SumUpOptions.Value.ClientId, SumUpOptions.Value.ClientSecret, SumUpOptions.Value.GrantType).ConfigureAwait(false);
-                    
-                    if(token is not null)
-                    {
-                        await CacheManager.SetAsync(key, token);
-                    }
-                }
-                else
-                {
-                    token = cacheResult;
-                }
 
                 HostedCheckoutInput input = new HostedCheckoutInput()
                 {
-                    amount = subscription.Importo.HasValue ? (double)subscription.Importo : 0,
+                    amount = subscription.Importo.HasValue ? (decimal)subscription.Importo : 0,
                     currency = "EUR",
                     checkout_reference = subscription.IdCheckout,
                     description = $"Pagamento Abbonamento {subscription.TipoAbbonamento} {utente.Nome} {utente.Cognome}",
-                    merchant_code = SumUpOptions.Value.MerchantCode
+                    //merchant_code = SumUpOptions.Value.MerchantCode
                 };
 
-                HostedCheckoutOutput checkoutOutput = await manager.CreateHostedCheckout(input, token.access_token).ConfigureAwait(false);
+                HostedCheckoutOutput checkoutOutput = await sumUpManager.CreateHostedCheckout(input).ConfigureAwait(false);
 
                 if(checkoutOutput is not null)
                 {
@@ -326,35 +310,16 @@ namespace Identity.Services
         {
             try
             {
-                SumUpManager manager = new SumUpManager();
-                string key = "SumUpToken";
-                SumUpToken token = new();
-
-                SumUpToken cacheResult = await CacheManager.GetAsync<SumUpToken>(key);
-                if (cacheResult is null)
-                {
-                    token = await manager.SumUpAuth(SumUpOptions.Value.ClientId, SumUpOptions.Value.ClientSecret, SumUpOptions.Value.GrantType).ConfigureAwait(false);
-
-                    if (token is not null)
-                    {
-                        await CacheManager.SetAsync(key, token, TimeSpan.FromSeconds(token.expires_in - 1));
-                    }
-                }
-                else
-                {
-                    token = cacheResult;
-                }
-
                 HostedCheckoutInput input = new HostedCheckoutInput()
                 {
-                    amount = subscription.Importo.HasValue ? (double)subscription.Importo : 0,
+                    amount = subscription.Importo.HasValue ? (decimal)subscription.Importo : 0,
                     currency = "EUR",
                     checkout_reference = subscription.IdCheckout,
                     description = $"Pagamento Abbonamento {subscription.TipoAbbonamentoNavigation.Descrizione} {utente.Nome} {utente.Cognome}",
-                    merchant_code = SumUpOptions.Value.MerchantCode
+                    //merchant_code = SumUpOptions.Value.MerchantCode
                 };
 
-                HostedCheckoutOutput checkoutOutput = await manager.CreateHostedCheckout(input, token.access_token).ConfigureAwait(false);
+                HostedCheckoutOutput checkoutOutput = await sumUpManager.CreateHostedCheckout(input).ConfigureAwait(false);
 
                 if (checkoutOutput is not null)
                 {

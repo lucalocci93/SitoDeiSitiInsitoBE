@@ -1,3 +1,4 @@
+using Identity.Interfaces;
 using Identity.Models.Mapper;
 using Identity.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -7,7 +8,11 @@ using Microsoft.OpenApi.Models;
 using SitoDeiSiti.DAL.Models;
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.DTOs.ConfigSettings;
+using SitoDeiSiti.External.SumUp;
+using SitoDeiSiti.External.SumUp.Interfaces;
+using SitoDeiSiti.Interfaces;
 using SitoDeiSiti.Models.ConfigSettings;
+using SitoDeiSiti.Utils.HTTPHandlers;
 using SitoDeiSitiService.Models.Mapper;
 using System;
 using System.Text;
@@ -75,6 +80,18 @@ builder.Services.AddScoped<UserManager>();
 builder.Services.AddScoped<AbbonamentoManager>();
 builder.Services.AddScoped<DocumentoManager>();
 builder.Services.AddScoped<EventiManager>();
+builder.Services.AddScoped<SumUpManager>();
+
+builder.Services.AddHttpClient<SumUpManager>(options =>
+{
+    options.DefaultRequestHeaders.Clear();
+    options.DefaultRequestHeaders.Add("Accept", "application/json");
+    options.BaseAddress = new Uri("https://api.example.com/");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
+.AddHttpMessageHandler(() => new OAuth2HttpHandler(builder.Configuration.GetValue<string>("SumUp:SumUpAuthUrl"),
+    builder.Configuration.GetValue<string>("SumUp:GrantType"), builder.Configuration.GetValue<string>("SumUp:ClientId"),
+    builder.Configuration.GetValue<string>("SumUp:ClientSecret")));
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

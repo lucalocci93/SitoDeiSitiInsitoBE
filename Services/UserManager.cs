@@ -18,10 +18,13 @@ namespace Identity.Services
     public class UserManager : BaseManager, IUser
     {
         private readonly IDalUtente dalUtente;
-        public UserManager(IOptions<Token> options, SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager) 
-            : base(options, mapper, cacheManager)
+        private readonly IOptions<Token> TokenSettings;
+
+        public UserManager(IOptions<Token> tokenSettings, SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager) 
+            : base(mapper, cacheManager)
         {
             dalUtente = new DalUtenti(context);
+            TokenSettings = tokenSettings;
         }
 
         public async Task<Response<User>> CreateUser(User _user)
@@ -65,7 +68,7 @@ namespace Identity.Services
             //string key = new Guid().ToString();
             try
             {
-                var securityKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(TokenSettings.SecretKey));
+                var securityKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(TokenSettings.Value.SecretKey));
                 var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
                 Utente? user = new Utente();
@@ -87,10 +90,10 @@ namespace Identity.Services
                     };
 
                     var token = new JwtSecurityToken(
-                        issuer: TokenSettings.Issuer,
-                        audience: TokenSettings.Audience,
+                        issuer: TokenSettings.Value.Issuer,
+                        audience: TokenSettings.Value.Audience,
                         claims: claims,
-                        expires: DateTime.UtcNow.AddMinutes(TokenSettings.expireMinutes),
+                        expires: DateTime.UtcNow.AddMinutes(TokenSettings.Value.expireMinutes),
                         signingCredentials: credentials
                     );
 

@@ -24,7 +24,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SitoDeiSiti.DAL\SitoDeiSiti.DAL.csproj" />
-    <ProjectReference Include="..\SitoDeiSiti.ExternalUtils\SitoDeiSiti.ExternalUtils.csproj" />
   </ItemGroup>
 
 </Project>

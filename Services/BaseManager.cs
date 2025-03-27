@@ -12,9 +12,8 @@ namespace Identity.Services
         protected readonly IMapper Mapper;
         protected readonly CacheManager CacheManager;
 
-        public BaseManager(IOptions<Token> options, IMapper mapper, CacheManager cacheManager)
+        public BaseManager(IMapper mapper, CacheManager cacheManager)
         {
-            TokenSettings = options.Value;
             Mapper = mapper;
             this.CacheManager = cacheManager;
         }

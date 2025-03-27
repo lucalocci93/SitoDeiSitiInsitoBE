@@ -15,8 +15,8 @@ namespace Identity.Services
     public class DocumentoManager : BaseManager, IDocument
     {
         private readonly IDalDocumenti dalDocumenti;
-        public DocumentoManager(IOptions<Token> options, SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager)
-            : base(options, mapper, cacheManager)
+        public DocumentoManager(SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager)
+            : base(mapper, cacheManager)
         {
             dalDocumenti = new DalDocumenti(context);
         }
