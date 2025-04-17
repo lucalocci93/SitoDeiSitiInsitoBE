@@ -9,16 +9,22 @@ using SitoDeiSiti.DAL.Models;
 using SitoDeiSiti.Models.ConfigSettings;
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.Models;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace Identity.Services
 {
     public class DocumentoManager : BaseManager, IDocument
     {
         private readonly IDalDocumenti dalDocumenti;
-        public DocumentoManager(SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager)
-            : base(mapper, cacheManager)
+        public DocumentoManager(SitoDeiSitiInsitoContext context, IMapper mapper, HybridCache hybridCache)
+            : base(mapper, hybridCache)
         {
             dalDocumenti = new DalDocumenti(context);
+        }
+
+        private enum CacheKey
+        {
+            DocumentType
         }
 
         public async Task<Response<Document>> AddDocument(DocumentExt document)
@@ -129,30 +135,22 @@ namespace Identity.Services
             List<DocumentType> documentTypes = new List<DocumentType>();
             List<TipoDocumento> tipoDocumenti = new List<TipoDocumento>();
 
-            string key = "DocumentType";
-            List<DocumentType> cacheResult = await CacheManager.GetAsync<List<DocumentType>>(key);
-            if (cacheResult is null)
+            try
             {
-                try
+                documentTypes = await HybridCache.GetOrCreateAsync(nameof(CacheKey.DocumentType), async result => Mapper.Map<List<DocumentType>>(await dalDocumenti.GetTipiAbbonamento().ConfigureAwait(false)));
+
+                if(documentTypes != null && documentTypes.Any())
                 {
-                    tipoDocumenti = await dalDocumenti.GetTipiAbbonamento().ConfigureAwait(false);
-
-                    documentTypes = Mapper.Map<List<TipoDocumento>, List<DocumentType>>(tipoDocumenti);
-                    await CacheManager.SetAsync(key, documentTypes);
-
                     return new Response<List<DocumentType>>(true, documentTypes);
                 }
-                catch (Exception ex)
+                else
                 {
-                    return new Response<List<DocumentType>>(false, new Error(ex.Message));
-
+                    return new Response<List<DocumentType>>(false, new Error("Nessun tipo documento trovato"));
                 }
-
             }
-            else
+            catch (Exception ex)
             {
-                documentTypes = cacheResult.ToList();
-                return new Response<List<DocumentType>>(true, documentTypes);
+                return new Response<List<DocumentType>>(false, new Error(ex.Message));
             }
         }
     }

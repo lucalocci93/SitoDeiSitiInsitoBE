@@ -1,6 +1,6 @@
 ﻿namespace SitoDeiSiti.DTOs
 {
-    public class Subscription
+    public record Subscription
     {
         public int? Id { get; set; }
         public int IdTipoAbbonamento { get; set; }
@@ -15,7 +15,7 @@
         public Guid Utente { get; set; }
     }
 
-    public class SubscriptionType
+    public record SubscriptionType
     {
         public int Id { get; set; }
         public string Descrizione { get; set; }

@@ -1,7 +1,9 @@
 ﻿using AutoMapper;
+using Identity.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.ValueGeneration;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OfficeOpenXml;
@@ -23,11 +25,16 @@ namespace Identity.Services
     {
         private readonly IDalEventi dalEventi;
         private readonly IDalUtente dalUtente;
-        public EventiManager(SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager)
-            : base(mapper, cacheManager)
+        public EventiManager(SitoDeiSitiInsitoContext context, IMapper mapper, HybridCache hybridCache)
+            : base(mapper, hybridCache)
         {
             dalEventi = new DalEventi(context);
             dalUtente = new DalUtenti(context);
+        }
+
+        private enum CacheKey
+        {
+            EventCategories
         }
 
         public async Task<Response<Events>> CreateEvent(Events events)
@@ -72,30 +79,23 @@ namespace Identity.Services
         {
             List<Category> categories = new();
             List<Categoria> categorie = new();
-            string Key = "EventCategories";
 
-            List<Category> cacheResult = await CacheManager.GetAsync<List<Category>>(Key);
-            if (cacheResult is null || !cacheResult.Any())
+            try
             {
-                try
+                categories = await HybridCache.GetOrCreateAsync<List<Category>>(nameof(CacheKey.EventCategories), async result => Mapper.Map<List<Category>>(await dalEventi.GetCategorie().ConfigureAwait(false)));
+
+                if(categories != null && categories.Any())
                 {
-                    categorie = await dalEventi.GetCategorie().ConfigureAwait(false);
-
-                    categories = Mapper.Map<List<Categoria>, List<Category>>(categorie);
-
-                    await CacheManager.SetAsync<List<Category>>(Key, categories);
-
                     return new Response<List<Category>>(true, categories);
                 }
-                catch (Exception ex)
+                else
                 {
-                    return new Response<List<Category>>(false, new Error(ex.Message));
+                    return new Response<List<Category>>(false, new Error("Nessuna categoria trovata"));
                 }
             }
-            else
+            catch(Exception ex)
             {
-                categories = cacheResult.ToList();
-                return new Response<List<Category>>(true, categories);
+                return new Response<List<Category>>(false, new Error(ex.Message));
             }
         }
 

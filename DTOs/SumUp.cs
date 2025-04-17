@@ -1,6 +1,6 @@
 ﻿namespace SitoDeiSiti.DTOs
 {
-    public class SumUp
+    public record SumUp
     {
         public string ClientId      {get;set;}
         public string ClientSecret  {get;set;}

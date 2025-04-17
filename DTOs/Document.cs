@@ -1,7 +1,7 @@
 ﻿using Identity.Interfaces;
 namespace SitoDeiSiti.DTOs
 {
-    public class Document
+    public record Document
     {
         public Guid? idDocumento { get; set; }
         public int idTipoDocumento { get; set; }
@@ -9,13 +9,13 @@ namespace SitoDeiSiti.DTOs
         public DateTime? dataCaricamento { get; set; }
     }
 
-    public class DocumentExt : Document
+    public record DocumentExt : Document
     {
         public Guid rowGuid { get; set; }
         public string datiDocumento { get; set; }
     }
 
-    public class DocumentType
+    public record DocumentType
     {
         public int Id { get; set; }
         public string Descrizione { get; set; }

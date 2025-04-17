@@ -12,6 +12,7 @@ using SitoDeiSiti.External.SumUp;
 using SitoDeiSiti.External.SumUp.Models.SumUp;
 using SitoDeiSiti.Utils.HTTPHandlers.Model;
 using SitoDeiSiti.External.SumUp.Interfaces;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace Identity.Services
 {
@@ -22,13 +23,18 @@ namespace Identity.Services
 
         private readonly SumUpManager sumUpManager;
 
-        public AbbonamentoManager(SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager,
+        public AbbonamentoManager(SitoDeiSitiInsitoContext context, IMapper mapper, HybridCache hybridCache,
             SumUpManager _sumUpManager)
-            : base(mapper, cacheManager)
+            : base(mapper, hybridCache)
         {
             dalAbbonamenti = new DalAbbonamenti(context);
             dalUtente = new DalUtenti(context);
             sumUpManager = _sumUpManager;
+        }
+
+        private enum CacheKey
+        {
+            SubscriptionType
         }
 
         public async Task<Response<Subscription>> AddAbbonamentoUser(Subscription subscription)
@@ -223,35 +229,22 @@ namespace Identity.Services
         {
             List<SubscriptionType> subscriptionTypes = new List<SubscriptionType>();
 
-            string key = "TipiAbbonamento";
-            List<SubscriptionType> cacheResult = await CacheManager.GetAsync<List<SubscriptionType>>(key);
-            if (cacheResult == null)
+            try
             {
-                try
+                subscriptionTypes = await HybridCache.GetOrCreateAsync(nameof(CacheKey.SubscriptionType), async result => Mapper.Map<List<SubscriptionType>>(await dalAbbonamenti.GetTipiAbbonamento().ConfigureAwait(false)));
+            
+                if(subscriptionTypes != null && subscriptionTypes.Any())
                 {
-                    List<TipoAbbonamento> TipiAbbonamento = await dalAbbonamenti.GetTipiAbbonamento().ConfigureAwait(false);
-
-                    if (TipiAbbonamento != null)
-                    {
-                        subscriptionTypes = Mapper.Map<List<TipoAbbonamento>, List<SubscriptionType>>(TipiAbbonamento);
-                        await CacheManager.SetAsync(key, subscriptionTypes);
-
-                        return new Response<List<SubscriptionType>>(true, subscriptionTypes);
-                    }
-                    else
-                    {
-                        return new Response<List<SubscriptionType>>(false, subscriptionTypes);
-                    }
+                    return new Response<List<SubscriptionType>>(true, subscriptionTypes);
                 }
-                catch (Exception ex)
+                else
                 {
-                    return new Response<List<SubscriptionType>>(false, new Error(ex.Message));
+                    return new Response<List<SubscriptionType>>(false, new Error("Nessun tipo abbonamento trovato"));
                 }
             }
-            else
+            catch (Exception ex)
             {
-                subscriptionTypes = cacheResult;
-                return new Response<List<SubscriptionType>>(true, subscriptionTypes);
+                return new Response<List<SubscriptionType>>(false, new Error(ex.Message));
             }
         }
 
@@ -315,7 +308,7 @@ namespace Identity.Services
                     amount = subscription.Importo.HasValue ? (decimal)subscription.Importo : 0,
                     currency = "EUR",
                     checkout_reference = subscription.IdCheckout,
-                    description = $"Pagamento Abbonamento {subscription.TipoAbbonamentoNavigation.Descrizione} {utente.Nome} {utente.Cognome}",
+                    description = $"Pagamento Abbonamento {subscription.TipoAbbonamentoNavigation.Descrizione} {utente.Nome} {utente.Cognome} {utente.CodFiscale.ToUpper()}",
                     //merchant_code = SumUpOptions.Value.MerchantCode
                 };
 

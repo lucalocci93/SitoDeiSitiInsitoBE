@@ -12,6 +12,8 @@ using SitoDeiSiti.Models;
 using SitoDeiSiti.Models.ConfigSettings;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using SitoDeiSiti.Utils.Encryption;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace Identity.Services
 {
@@ -20,8 +22,8 @@ namespace Identity.Services
         private readonly IDalUtente dalUtente;
         private readonly IOptions<Token> TokenSettings;
 
-        public UserManager(IOptions<Token> tokenSettings, SitoDeiSitiInsitoContext context, IMapper mapper, CacheManager cacheManager) 
-            : base(mapper, cacheManager)
+        public UserManager(IOptions<Token> tokenSettings, SitoDeiSitiInsitoContext context, IMapper mapper, HybridCache hybridCache) 
+            : base(mapper, hybridCache)
         {
             dalUtente = new DalUtenti(context);
             TokenSettings = tokenSettings;
@@ -30,6 +32,8 @@ namespace Identity.Services
         public async Task<Response<User>> CreateUser(User _user)
         {
             User user = new User();
+
+            //Encryption.Encrypt<User>(_user);
 
             try
             {
@@ -71,12 +75,16 @@ namespace Identity.Services
                 var securityKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(TokenSettings.Value.SecretKey));
                 var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-                Utente? user = new Utente();
+                Utente? utente = new Utente();
+                User user = new();
 
-                user = await dalUtente.CheckUtenteUserAndPassword(username, password).ConfigureAwait(false);
+                utente = await dalUtente.CheckUtenteUserAndPassword(username, password).ConfigureAwait(false);
 
-                if (user != null)
+                //Encryption.Decrypt<Utente>(user);
+
+                if (utente != null)
                 {
+                    user = Mapper.Map<Utente, User>(utente);
 
                     var claims = new[]
                     {
@@ -121,6 +129,9 @@ namespace Identity.Services
             try
             {
                 users = Mapper.Map<List<Utente?>, List<User>>(await dalUtente.GetUtenti().ConfigureAwait(false));
+
+                //Encryption.Decrypt<List<User>>(users);
+
                 return new Response<List<User>>(true, users);
             }
             catch (Exception ex)

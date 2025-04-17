@@ -1,7 +1,7 @@
 ﻿
 namespace SitoDeiSiti.DTOs
 {
-    public class User
+    public record User
     {
         public string Nome { get; set; }
         public string Cognome { get; set; }

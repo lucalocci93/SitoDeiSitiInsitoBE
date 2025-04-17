@@ -5,13 +5,17 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SitoDeiSiti.DAL;
+using SitoDeiSiti.DAL.Interface;
 using SitoDeiSiti.DAL.Models;
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.DTOs.ConfigSettings;
+using SitoDeiSiti.DTOs.Mapper;
 using SitoDeiSiti.External.SumUp;
 using SitoDeiSiti.External.SumUp.Interfaces;
 using SitoDeiSiti.Interfaces;
 using SitoDeiSiti.Models.ConfigSettings;
+using SitoDeiSiti.Services;
 using SitoDeiSiti.Utils.HTTPHandlers;
 using SitoDeiSitiService.Models.Mapper;
 using System;
@@ -22,6 +26,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+
+//SWAGGER
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(
@@ -54,45 +60,42 @@ builder.Services.AddSwaggerGen(
     }
 );
 
+//CORS
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
+string[] origins = builder.Configuration.GetSection("CORS:AllowedOrigins").Get<string[]>();
 
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
-                      builder =>
+                      policy =>
                       {
-                          builder.AllowAnyHeader();
-                          builder.AllowAnyMethod();
+                          policy.AllowAnyHeader();
+                          policy.AllowAnyMethod();
                           //builder.AllowAnyOrigin();
-                          builder.WithOrigins("http://localhost:4200");
-                          builder.WithOrigins("http://localhost:81");
+                          policy.WithOrigins(origins);
                       });
 });
 
+//CONFIG
 builder.Services.Configure<Token>(builder.Configuration.GetSection("Token"));
 builder.Services.Configure<Cache>(builder.Configuration.GetSection("Cache"));
 builder.Services.Configure<SumUp>(builder.Configuration.GetSection("SumUp"));
+builder.Services.Configure<CORS>(builder.Configuration.GetSection("CORS"));
 
-builder.Services.AddMemoryCache();
-builder.Services.AddSingleton<CacheManager>();
+//CACHE
+//builder.Services.AddMemoryCache();
+//builder.Services.AddSingleton<ICache, CacheManager>();
+builder.Services.AddHybridCache();
 
+//SERVICES
 builder.Services.AddScoped<UserManager>();
 builder.Services.AddScoped<AbbonamentoManager>();
 builder.Services.AddScoped<DocumentoManager>();
 builder.Services.AddScoped<EventiManager>();
 builder.Services.AddScoped<SumUpManager>();
+builder.Services.AddScoped<SitoManager>();
 
-builder.Services.AddHttpClient<SumUpManager>(options =>
-{
-    options.DefaultRequestHeaders.Clear();
-    options.DefaultRequestHeaders.Add("Accept", "application/json");
-    options.BaseAddress = new Uri("https://api.example.com/");
-})
-.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
-.AddHttpMessageHandler(() => new OAuth2HttpHandler(builder.Configuration.GetValue<string>("SumUp:SumUpAuthUrl"),
-    builder.Configuration.GetValue<string>("SumUp:GrantType"), builder.Configuration.GetValue<string>("SumUp:ClientId"),
-    builder.Configuration.GetValue<string>("SumUp:ClientSecret")));
-
+//AUTH
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -108,15 +111,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+builder.Services.AddAuthorization();
+
+//EF
 builder.Services.AddDbContext<SitoDeiSitiInsitoContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("SitoDeiSitiInsitoDatabase"));
-}, ServiceLifetime.Transient);
+}, ServiceLifetime.Scoped);
 
+//AUTOMAPPER
 builder.Services.AddAutoMapper(typeof(AutoMapperUtenteProfile), typeof(AutoMapperAbbonamentoProfile),
-    typeof(AutoMapperDocumento), typeof(AutoMapperEvento));
+    typeof(AutoMapperDocumento), typeof(AutoMapperEvento), typeof(AutoMapperSito));
 
-builder.Services.AddAuthorization();
+//HTTP
+builder.Services.AddHttpClient<SumUpManager>(options =>
+{
+    options.DefaultRequestHeaders.Clear();
+    options.DefaultRequestHeaders.Add("Accept", "application/json");
+})
+.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
+.AddHttpMessageHandler(() => new OAuth2HttpHandler(builder.Configuration.GetValue<string>("SumUp:SumUpAuthUrl"),
+    builder.Configuration.GetValue<string>("SumUp:GrantType"), builder.Configuration.GetValue<string>("SumUp:ClientId"),
+    builder.Configuration.GetValue<string>("SumUp:ClientSecret")));
+
 
 var app = builder.Build();
 

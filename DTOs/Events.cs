@@ -2,7 +2,7 @@
 
 namespace SitoDeiSiti.DTOs
 {
-    public class Events
+    public record Events
     {
         public Guid? Id { get; set; }
         public Copertina Copertina { get; set; }
@@ -20,7 +20,7 @@ namespace SitoDeiSiti.DTOs
         }
     }
 
-    public class Category
+    public record Category
     {
         [JsonPropertyName("Id")]
         public int Id { get; set; }
@@ -34,7 +34,7 @@ namespace SitoDeiSiti.DTOs
         }
     }
 
-    public class Copertina
+    public record Copertina
     {
         public string ImageData { get; set; }
         public string ContentType { get; set; }
@@ -47,7 +47,7 @@ namespace SitoDeiSiti.DTOs
 
     }
 
-    public class EventSubscription
+    public record EventSubscription
     {
         public Guid EventId { get; set; }
         public Guid UserId { get; set; }
@@ -60,7 +60,7 @@ namespace SitoDeiSiti.DTOs
         }
     }
 
-    public class SingleEventSubscription
+    public record SingleEventSubscription
     {
         public Guid EventId { get; set; }
         public Guid UserId { get; set; }
@@ -68,7 +68,7 @@ namespace SitoDeiSiti.DTOs
         public string Note { get; set; }
     }
 
-    public class Competitor
+    public record Competitor
     {
         public User Utente { get; set; }
         public SingleEventSubscription Iscrizione { get; set; }

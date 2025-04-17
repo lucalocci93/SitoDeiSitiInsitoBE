@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Identity.Interfaces;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using SitoDeiSiti.DTOs.ConfigSettings;
@@ -9,11 +10,13 @@ namespace Identity.Services
     public class CacheManager : ICache
     {
         public readonly IMemoryCache MemoryCache;
+        public readonly HybridCache HybridCache;
         public MemoryCacheEntryOptions CacheOptions { get; }
 
-        public CacheManager(IOptions<Cache> options, IMemoryCache _memoryCache)
+        public CacheManager(IOptions<Cache> options, IMemoryCache _memoryCache, HybridCache hybridCache)
         {
             MemoryCache = _memoryCache;
+            HybridCache = hybridCache;
             CacheOptions = new MemoryCacheEntryOptions()
             .SetSlidingExpiration(TimeSpan.FromMinutes(options.Value.CacheExpirationMinutes));
         }

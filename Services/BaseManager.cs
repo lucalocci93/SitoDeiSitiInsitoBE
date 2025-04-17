@@ -1,4 +1,6 @@
 ﻿using AutoMapper;
+using Identity.Interfaces;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using SitoDeiSiti.Models.ConfigSettings;
@@ -10,12 +12,13 @@ namespace Identity.Services
     {
         protected readonly Token TokenSettings;
         protected readonly IMapper Mapper;
-        protected readonly CacheManager CacheManager;
+        //protected readonly ICache CacheManager;
+        protected readonly HybridCache HybridCache;
 
-        public BaseManager(IMapper mapper, CacheManager cacheManager)
+        public BaseManager(IMapper mapper, HybridCache hybridCache)
         {
             Mapper = mapper;
-            this.CacheManager = cacheManager;
+            HybridCache = hybridCache;
         }
     }
 }

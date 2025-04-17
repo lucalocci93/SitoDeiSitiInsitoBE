@@ -1,6 +1,6 @@
 ﻿namespace SitoDeiSiti.Models
 {
-    public class Response<T> where T : class
+    public record Response<T> where T : class
     {
         public bool success { get; set; }
         public T Data { get; set; }
@@ -25,7 +25,7 @@
         IscrizioneEventoGiaEffettuata
     }
 
-    public class Error
+    public record Error
     {
         public int Code { get; set; }
         public string Message { get; set; }
