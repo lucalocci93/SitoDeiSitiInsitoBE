@@ -1,6 +1,8 @@
-﻿namespace SitoDeiSiti.DTOs
+﻿using System.Text.Json.Serialization;
+
+namespace SitoDeiSiti.DTOs
 {
-    public record Images
+    public record Graphics
     {
         public int Id { get; set; }
 
@@ -15,10 +17,14 @@
         public string Title { get; set; }
 
         public string Description { get; set; }
-        
+
         public string AdditionalText { get; set; }
-        
+
+        public bool? IsAdditionalTextMarkdown { get; set; }
+
         public int? Order { get; set; }
+
+        public bool Active { get; set; }
 
     }
 
@@ -27,4 +33,23 @@
         public int Id { get; set; }
         public string Page { get; set; }
     }
+
+    public record Redirections
+    {
+        public int? id { get; set; }
+        public string url { get; set; }
+        public string redirectUrl { get; set; }
+        public bool active { get; set; }
+    }
+
+    public record Videos
+    {
+        public int? Id { get; set; }
+        public string Url { get; set; }
+        public string Title { get; set; }
+        public string Description { get; set; }
+        public string Provider { get; set; }
+        public bool Active { get; set; }
+    }
+
 }

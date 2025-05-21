@@ -1,4 +1,6 @@
 ﻿using DAL.Enums;
+using FluentValidation;
+using FluentValidation.Results;
 using Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -6,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.Models;
+using SitoDeiSiti.Validators;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -13,39 +16,53 @@ namespace Identity.Controllers
 {
     public class UserController : BaseController
     {
+        private readonly CreateNewUserValidator NewUserValidator;
+        private readonly AuthValidator authValidator;
+
         public UserController(UserManager UserService, AbbonamentoManager AbbonamentoService,
             DocumentoManager documentoManager, EventiManager eventiManager)
             : base(UserService, AbbonamentoService, documentoManager, eventiManager)
         {
+            NewUserValidator = new();
+            authValidator = new();
         }
 
         [AllowAnonymous]
         [HttpGet("Authenticate")]
-        public async Task<ActionResult> Authenticate([FromQuery]string Username, string Password)
+        public async Task<ActionResult> Authenticate([FromQuery] string Username, string Password)
         {
-            Response<JWT> response = await userManager.GenerateToken(Username, Password);
+            var res = await authValidator.ValidateAsync(new User() { Email = Username, Password = Password }).ConfigureAwait(false);
 
-            if (response != null)
-            {
-                if (response.success)
+            if (res.IsValid)
+            { 
+                Response<JWT> response = await userManager.GenerateToken(Username, Password);
+
+                if (response != null)
                 {
-                    if (string.IsNullOrEmpty(response.Data.Token))
+                    if (response.success)
                     {
-                        return Unauthorized();
+                        if (string.IsNullOrEmpty(response.Data.Token))
+                        {
+                            return Unauthorized();
+                        }
+                        else
+                        {
+                            return Ok(response);
+                        }
                     }
                     else
                     {
-                        return Ok(response);
+                        return BadRequest(response.Error.Message);
                     }
                 }
                 else
                 {
-                    return BadRequest(response.Error.Message);
+                    return Problem();
                 }
             }
             else
             {
-                return Problem();
+                return BadRequest(res.Errors.FirstOrDefault()?.ErrorMessage);
             }
         }
 
@@ -99,24 +116,33 @@ namespace Identity.Controllers
         [HttpPost("CreateUser")]
         public async Task<ActionResult> Create([FromBody] User user)
         {
-            if(user != null)
+            if (user != null)
             {
-                var resp = await userManager.CreateUser(user);
+                ValidationResult res = NewUserValidator.Validate(user);
 
-                if (resp != null)
+                if (res.IsValid)
                 {
-                    if (resp.success)
+                    var resp = await userManager.CreateUser(user);
+
+                    if (resp != null)
                     {
-                        return Ok();
+                        if (resp.success)
+                        {
+                            return Ok();
+                        }
+                        else
+                        {
+                            return BadRequest(resp.Error.Message);
+                        }
                     }
                     else
                     {
-                        return BadRequest(resp.Error.Message);
+                        return Problem();
                     }
                 }
                 else
                 {
-                    return Problem();
+                    return BadRequest();
                 }
             }
             else

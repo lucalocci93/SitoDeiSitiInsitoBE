@@ -34,7 +34,9 @@ namespace Identity.Services
 
         private enum CacheKey
         {
-            EventCategories
+            EventCategories,
+            GetEvents,
+            GetEvent
         }
 
         public async Task<Response<Events>> CreateEvent(Events events)
@@ -61,6 +63,9 @@ namespace Identity.Services
 
                 if (IsEventCreated)
                 {
+                    //rimuovo cache eventi
+                    await HybridCache.RemoveAsync(nameof(CacheKey.GetEvents));
+                    
                     return new Response<Events>(true, events);
                 }
                 else
@@ -107,7 +112,8 @@ namespace Identity.Services
 
             try
             {
-                evento = await dalEventi.GetEvent(Id).ConfigureAwait(false);
+                //evento = await dalEventi.GetEvent(Id).ConfigureAwait(false);
+                evento = await HybridCache.GetOrCreateAsync<Evento>(string.Concat(nameof(CacheKey.GetEvent),'_',Id), async result => await dalEventi.GetEvent(Id).ConfigureAwait(false));
 
                 if (evento is not null)
                 {
@@ -156,7 +162,14 @@ namespace Identity.Services
 
             try
             {
-                eventi = await dalEventi.GetEventi().ConfigureAwait(false);
+
+                //eventi = await dalEventi.GetEventi().ConfigureAwait(false);
+                eventi = await HybridCache.GetOrCreateAsync<List<Evento>>(nameof(CacheKey.GetEvents), async result => await dalEventi.GetEventi().ConfigureAwait(false));
+
+                if (eventi == null || eventi.Count == 0)
+                {
+                    return new Response<List<Events>>(true, events); //ritorno lista vuota perche è gestita visualizzazione a FE
+                }
 
                 foreach (Evento evento in eventi)
                 {
@@ -227,6 +240,10 @@ namespace Identity.Services
 
                     if (isUpdated)
                     {
+                        //rimuovo cache eventi
+                        await HybridCache.RemoveAsync(nameof(CacheKey.GetEvents));
+                        await HybridCache.RemoveAsync(string.Concat(nameof(CacheKey.GetEvent), '_', e.Id));
+
                         return new Response<Events>(true, evento);
                     }
                     else

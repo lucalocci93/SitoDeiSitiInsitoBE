@@ -24,7 +24,9 @@ namespace Identity.Services
 
         private enum CacheKey
         {
-            DocumentType
+            DocumentType,
+            GetUserDocument,
+            GetDocument
         }
 
         public async Task<Response<Document>> AddDocument(DocumentExt document)
@@ -70,6 +72,8 @@ namespace Identity.Services
 
                 if(addRows == 1)
                 {
+                    await HybridCache.RemoveAsync(string.Concat(nameof(CacheKey.GetUserDocument), '_', document.rowGuid)).ConfigureAwait(false);
+
                     return new Response<Document>(true, document);
                 }
                 else
@@ -91,9 +95,10 @@ namespace Identity.Services
 
             try
             {
-                documents = await dalDocumenti.GetAllDocumenti(User).ConfigureAwait(false);
+                //documents = await dalDocumenti.GetAllDocumenti(User).ConfigureAwait(false);
+                //ListUserDocuments = Mapper.Map<List<Documento>, List<Document>>(documents);
 
-                ListUserDocuments = Mapper.Map<List<Documento>, List<Document>>(documents);
+                ListUserDocuments = await HybridCache.GetOrCreateAsync(string.Concat(nameof(CacheKey.GetUserDocument), '_', User), async result => Mapper.Map<List<Document>>(await dalDocumenti.GetAllDocumenti(User).ConfigureAwait(false)));
 
                 return new Response<List<Document>>(true, ListUserDocuments);
             }
@@ -110,11 +115,12 @@ namespace Identity.Services
 
             try
             {
-                documento = await dalDocumenti.GetDocumento(Id).ConfigureAwait(false);
+                //documento = await dalDocumenti.GetDocumento(Id).ConfigureAwait(false);
+                Documento = await HybridCache.GetOrCreateAsync(string.Concat(nameof(CacheKey.GetDocument), '_', Id), async result => Mapper.Map<DocumentExt>(await dalDocumenti.GetDocumento(Id).ConfigureAwait(false)));
 
-                if(documento != null)
+                if (documento != null)
                 {
-                    Documento = Mapper.Map<Documento, DocumentExt>(documento);
+                    //Documento = Mapper.Map<Documento, DocumentExt>(documento);
 
                     return new Response<DocumentExt>(true, Documento);
                 }

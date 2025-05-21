@@ -5,11 +5,25 @@ namespace SitoDeiSiti.Interfaces
 {
     public interface ISito
     {
-        Task<Response<List<Images>>> GetImmagini();
-        Task<Response<List<Images>>> GetImmaginiByPagina(int Pagina);
-        Task<Response<Images>> AddImmagine(Images immagine);
-        Task<Response<Images>> RemoveImmagine(int Id);
+        Task<Response<List<Graphics>>> GetGrafiche();
+        Task<Response<List<Graphics>>> GetGraficheByPagina(int Pagina);
+        Task<Response<Graphics>> AddGrafica(Graphics immagine);
+        Task<Response<Graphics>> RemoveGrafica(int Id);
+        Task<Response<Graphics>> ToggleGrafica(Graphics immagine);
 
         Task<Response<List<Pages>>> GetPagine();
+
+        Task<Response<List<Redirections>>> GetRedirezioni();
+        Task<Response<Redirections>> GetRedirezione(int Id);
+        Task<Response<Redirections>> AddRedirezione(Redirections redirezione);
+        Task<Response<Redirections>> RemoveRedirezione(int Id);
+        Task<Response<Redirections>> UpdateRedirezione(Redirections redirezione);
+        Task<Response<Redirections>> ToggleRedirezione(Redirections redirezione);
+
+        Task<Response<List<Videos>>> GetVideos();
+        Task<Response<Videos>> GetVideo(int Id);
+        Task<Response<Videos>> AddVideo(Videos video);
+        Task<Response<Videos>> RemoveVideo(int Id);
+        Task<Response<Videos>> ToggleVideo(Videos video);
     }
 }

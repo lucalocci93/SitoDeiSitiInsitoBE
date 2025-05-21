@@ -34,7 +34,9 @@ namespace Identity.Services
 
         private enum CacheKey
         {
-            SubscriptionType
+            SubscriptionType,
+            GetUserSubscription,
+            GetAllSubscription,
         }
 
         public async Task<Response<Subscription>> AddAbbonamentoUser(Subscription subscription)
@@ -52,7 +54,7 @@ namespace Identity.Services
                 //    }
                 //}
 
-                List<SubscriptionType> TipiAbbonamento = (await GetTipiAbbonamento().ConfigureAwait(false)).Data;
+                //IReadOnlyCollection<SubscriptionType> TipiAbbonamento = (await GetTipiAbbonamento().ConfigureAwait(false)).Data;
 
                 //subscription.DataScadenza = GetDataScadenzaAbbonamento(TipiAbbonamento.FirstOrDefault(t => t.Id == subscription.IdTipoAbbonamento), subscription.DataIscrizione);
 
@@ -62,6 +64,9 @@ namespace Identity.Services
 
                 if (AddRow > 0)
                 {
+                    await HybridCache.RemoveAsync(string.Concat(nameof(CacheKey.GetUserSubscription), '_', utente.RowGuid)).ConfigureAwait(false);
+                    await HybridCache.RemoveAsync(nameof(CacheKey.GetAllSubscription)).ConfigureAwait(false);
+
                     return new Response<Subscription>(true, subscription);
                 }
                 else
@@ -127,6 +132,8 @@ namespace Identity.Services
 
                 if (RowInserted > 0)
                 {
+                    await HybridCache.RemoveAsync(nameof(CacheKey.SubscriptionType)).ConfigureAwait(false);
+
                     return new Response<SubscriptionType>(true, subscriptionType);
                 }
                 else
@@ -140,15 +147,16 @@ namespace Identity.Services
             }
         }
 
-        public async Task<Response<List<Subscription>>> GetAbbonamentiByUser(Guid utente)
+        public async Task<Response<IReadOnlyCollection<Subscription>>> GetAbbonamentiByUser(Guid utente)
         {
             List<Abbonamento> ListaAbbonamenti = new List<Abbonamento>();
-            List<Subscription> SubscriptionList = new List<Subscription>();
+            IReadOnlyCollection<Subscription> SubscriptionList = new List<Subscription>();
             try
             {
                 ListaAbbonamenti = await dalAbbonamenti.GetAbbonamentiUtente(utente).ConfigureAwait(false);
+                //ListaAbbonamenti = await HybridCache.GetOrCreateAsync(string.Concat(nameof(CacheKey.GetUserSubscription),'_',utente), async result => await dalAbbonamenti.GetAbbonamentiUtente(utente).ConfigureAwait(false)).ConfigureAwait(false);
 
-                foreach(var sub in ListaAbbonamenti.Where(a => a.Pagato.HasValue && a.Pagato.Value && (!a.Attivo.HasValue || !a.Attivo.Value)))
+                foreach (var sub in ListaAbbonamenti.Where(a => a.Pagato.HasValue && a.Pagato.Value && (!a.Attivo.HasValue || !a.Attivo.Value)))
                 {
                     if (sub.DataIscrizione.HasValue && sub.DataIscrizione.Value <= DateTime.Now
                     && (!sub.DataScadenza.HasValue || (sub.DataScadenza.HasValue && sub.DataScadenza >= DateTime.Now)))
@@ -170,13 +178,13 @@ namespace Identity.Services
                     }
                 }
 
-                SubscriptionList = Mapper.Map<List<Abbonamento>, List<Subscription>>(ListaAbbonamenti);
+                SubscriptionList = Mapper.Map<List<Abbonamento>, IReadOnlyCollection<Subscription>>(ListaAbbonamenti);
 
-                return new Response<List<Subscription>>(true, SubscriptionList);
+                return new Response<IReadOnlyCollection<Subscription>>(true, SubscriptionList);
             }
             catch (Exception ex)
             {
-                return new Response<List<Subscription>>(false, SubscriptionList);
+                return new Response<IReadOnlyCollection<Subscription>>(false, SubscriptionList);
             }
         }
 
@@ -206,45 +214,46 @@ namespace Identity.Services
             }
         }
 
-        public async Task<Response<List<Subscription>>> GetAllAbbonamenti()
+        public async Task<Response<IReadOnlyCollection<Subscription>>> GetAllAbbonamenti()
         {
-            List<Subscription> SubscriptionList = new List<Subscription>();
+            IReadOnlyCollection<Subscription> SubscriptionList = new List<Subscription>();
             List<Abbonamento> AbbonamentoList = new();
 
             try
             {
-                AbbonamentoList = await dalAbbonamenti.GetAllAbbonamenti().ConfigureAwait(false);
+                //AbbonamentoList = await dalAbbonamenti.GetAllAbbonamenti().ConfigureAwait(false);
+                //SubscriptionList = Mapper.Map<List<Abbonamento>, List<Subscription>>(AbbonamentoList);
 
-                SubscriptionList = Mapper.Map<List<Abbonamento>, List<Subscription>>(AbbonamentoList);
+                SubscriptionList = await HybridCache.GetOrCreateAsync(nameof(CacheKey.GetAllSubscription), async result => Mapper.Map<IReadOnlyCollection<Subscription>>(await dalAbbonamenti.GetAllAbbonamenti().ConfigureAwait(false))).ConfigureAwait(false);
 
-                return new Response<List<Subscription>>(true, SubscriptionList);
+                return new Response<IReadOnlyCollection<Subscription>>(true, SubscriptionList);
             }
             catch (Exception ex)
             {
-                return new Response<List<Subscription>>(false, new Error(ex.Message));
+                return new Response<IReadOnlyCollection<Subscription>>(false, new Error(ex.Message));
             }
         }
 
-        public async Task<Response<List<SubscriptionType>>> GetTipiAbbonamento()
+        public async Task<Response<IReadOnlyCollection<SubscriptionType>>> GetTipiAbbonamento()
         {
-            List<SubscriptionType> subscriptionTypes = new List<SubscriptionType>();
+            IReadOnlyCollection<SubscriptionType> subscriptionTypes = new List<SubscriptionType>();
 
             try
             {
-                subscriptionTypes = await HybridCache.GetOrCreateAsync(nameof(CacheKey.SubscriptionType), async result => Mapper.Map<List<SubscriptionType>>(await dalAbbonamenti.GetTipiAbbonamento().ConfigureAwait(false)));
+                subscriptionTypes = await HybridCache.GetOrCreateAsync(nameof(CacheKey.SubscriptionType), async result => Mapper.Map<IReadOnlyCollection<SubscriptionType>>(await dalAbbonamenti.GetTipiAbbonamento().ConfigureAwait(false))).ConfigureAwait(false);
             
                 if(subscriptionTypes != null && subscriptionTypes.Any())
                 {
-                    return new Response<List<SubscriptionType>>(true, subscriptionTypes);
+                    return new Response<IReadOnlyCollection<SubscriptionType>>(true, subscriptionTypes);
                 }
                 else
                 {
-                    return new Response<List<SubscriptionType>>(false, new Error("Nessun tipo abbonamento trovato"));
+                    return new Response<IReadOnlyCollection<SubscriptionType>>(false, new Error("Nessun tipo abbonamento trovato"));
                 }
             }
             catch (Exception ex)
             {
-                return new Response<List<SubscriptionType>>(false, new Error(ex.Message));
+                return new Response<IReadOnlyCollection<SubscriptionType>>(false, new Error(ex.Message));
             }
         }
 
@@ -257,7 +266,10 @@ namespace Identity.Services
                 TipoAbbonamento tipoAbbonamento = Mapper.Map<Subscription, TipoAbbonamento>(subscription);
 
                 RowUpdated = await dalAbbonamenti.UpdateAbbonamento(operation, abbonamento, tipoAbbonamento).ConfigureAwait(false);
-                
+
+                await HybridCache.RemoveAsync(string.Concat(nameof(CacheKey.GetUserSubscription), '_', subscription.Utente)).ConfigureAwait(false);
+                await HybridCache.RemoveAsync(nameof(CacheKey.GetAllSubscription)).ConfigureAwait(false);
+
                 //TODO invio mail in caso di notifica pagamento
 
                 return new Response<Subscription>(true, subscription);

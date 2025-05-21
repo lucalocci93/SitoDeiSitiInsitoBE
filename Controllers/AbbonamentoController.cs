@@ -3,15 +3,21 @@ using Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SitoDeiSiti.DTOs;
+using SitoDeiSiti.Validators;
 
 namespace Identity.Controllers
 {
     public class AbbonamentoController : BaseController
     {
+        private readonly GetUserSubscriptionsValidator GetUserSubscriptionsValidator;
+        private readonly UpdateSubscriptionValidator UpdateSubscriptionValidator;
+
         public AbbonamentoController(UserManager UserService, AbbonamentoManager AbbonamentoService,
             DocumentoManager DocumentoManager, EventiManager eventiManager)
             :base(UserService, AbbonamentoService, DocumentoManager, eventiManager)
         {
+            GetUserSubscriptionsValidator = new();
+            UpdateSubscriptionValidator = new();
         }
 
         [Authorize(Roles = "Admin")]
@@ -41,22 +47,31 @@ namespace Identity.Controllers
         [HttpGet("GetUserSubscriptions")]
         public async Task<ActionResult> GetUserSubscriptions(Guid Utente)
         {
-            var resp = await abbonamentoManager.GetAbbonamentiByUser(Utente);
+            var validationResult = await GetUserSubscriptionsValidator.ValidateAsync(Utente).ConfigureAwait(false);
 
-            if (resp != null)
+            if (validationResult != null && validationResult.IsValid)
             {
-                if (resp.success)
+                var resp = await abbonamentoManager.GetAbbonamentiByUser(Utente);
+
+                if (resp != null)
                 {
-                    return Ok(resp.Data);
+                    if (resp.success)
+                    {
+                        return Ok(resp.Data);
+                    }
+                    else
+                    {
+                        return BadRequest(resp.Error.Message);
+                    }
                 }
                 else
                 {
-                    return BadRequest(resp.Error.Message);
+                    return Problem();
                 }
             }
             else
             {
-                return Problem();
+                return BadRequest(validationResult != null ? validationResult.Errors.FirstOrDefault()?.ErrorMessage : string.Empty);
             }
         }
 
@@ -84,7 +99,6 @@ namespace Identity.Controllers
         }
 
         [Authorize(Roles = "Admin")]
-        [Authorize]
         [HttpPost("AddUserSubscription")]
         public async Task<ActionResult> AddUserSubscription([FromBody] Subscription subscription)
         {
@@ -134,24 +148,32 @@ namespace Identity.Controllers
         [HttpPut("UpdateSubscription/{operation}")]
         public async Task<ActionResult> UpdateSubscription(DbOperationsAbbonamentoEnums operation, [FromBody] Subscription subscription)
         {
-            var resp = await abbonamentoManager.UpdateAbbonamentoUser(operation, subscription).ConfigureAwait(false);
+            var validationResult = await UpdateSubscriptionValidator.ValidateAsync(subscription).ConfigureAwait(false);
 
-            if (resp != null)
+            if (validationResult != null && validationResult.IsValid)
             {
-                if (resp.success)
+                var resp = await abbonamentoManager.UpdateAbbonamentoUser(operation, subscription).ConfigureAwait(false);
+
+                if (resp != null)
                 {
-                    return Ok(resp.Data);
+                    if (resp.success)
+                    {
+                        return Ok(resp.Data);
+                    }
+                    else
+                    {
+                        return BadRequest(resp.Error.Message);
+                    }
                 }
                 else
                 {
-                    return BadRequest(resp.Error.Message);
+                    return Problem();
                 }
             }
             else
             {
-                return Problem();
+                return BadRequest(validationResult != null ? validationResult.Errors.FirstOrDefault()?.ErrorMessage : string.Empty);
             }
         }
-
     }
 }

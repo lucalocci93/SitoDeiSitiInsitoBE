@@ -2,6 +2,7 @@ using Identity.Interfaces;
 using Identity.Models.Mapper;
 using Identity.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -20,6 +21,7 @@ using SitoDeiSiti.Utils.HTTPHandlers;
 using SitoDeiSitiService.Models.Mapper;
 using System;
 using System.Text;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -33,6 +35,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(
     setup =>
     {
+        setup.SwaggerDoc("v1", new OpenApiInfo { Title = "SitoDeiSitiInsito API", Version = "v1" });
+
         // Include 'SecurityScheme' to use JWT Authentication
         var jwtSecurityScheme = new OpenApiSecurityScheme
         {
@@ -62,7 +66,7 @@ builder.Services.AddSwaggerGen(
 
 //CORS
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
-string[] origins = builder.Configuration.GetSection("CORS:AllowedOrigins").Get<string[]>();
+string[] origins = builder.Configuration.GetSection("CORS:AllowedOrigins").Get<string[]>()!;
 
 builder.Services.AddCors(options =>
 {
@@ -81,6 +85,7 @@ builder.Services.Configure<Token>(builder.Configuration.GetSection("Token"));
 builder.Services.Configure<Cache>(builder.Configuration.GetSection("Cache"));
 builder.Services.Configure<SumUp>(builder.Configuration.GetSection("SumUp"));
 builder.Services.Configure<CORS>(builder.Configuration.GetSection("CORS"));
+builder.Services.Configure<UrlRedirezione>(builder.Configuration.GetSection("UrlRedirezione"));
 
 //CACHE
 //builder.Services.AddMemoryCache();
@@ -107,7 +112,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration.GetValue<string>("Token:Issuer"),
             ValidAudience = builder.Configuration.GetValue<string>("Token:Audience"),
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("Token:SecretKey")))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration.GetValue<string>("Token:SecretKey")!))
         };
     });
 
@@ -130,9 +135,22 @@ builder.Services.AddHttpClient<SumUpManager>(options =>
     options.DefaultRequestHeaders.Add("Accept", "application/json");
 })
 .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler())
-.AddHttpMessageHandler(() => new OAuth2HttpHandler(builder.Configuration.GetValue<string>("SumUp:SumUpAuthUrl"),
-    builder.Configuration.GetValue<string>("SumUp:GrantType"), builder.Configuration.GetValue<string>("SumUp:ClientId"),
-    builder.Configuration.GetValue<string>("SumUp:ClientSecret")));
+.AddHttpMessageHandler(() => new OAuth2HttpHandler(builder.Configuration.GetValue<string>("SumUp:SumUpAuthUrl")!,
+    builder.Configuration.GetValue<string>("SumUp:GrantType")!, builder.Configuration.GetValue<string>("SumUp:ClientId")!,
+    builder.Configuration.GetValue<string>("SumUp:ClientSecret")!));
+
+//RATE LIMITER
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddSlidingWindowLimiter("fixed", opt =>
+    {
+        opt.PermitLimit = builder.Configuration.GetValue<int>("RateLimiter:PermitLimit");
+        opt.Window = TimeSpan.FromSeconds(builder.Configuration.GetValue<int>("RateLimiter:IntervalInSeconds"));
+        opt.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+        opt.QueueLimit = builder.Configuration.GetValue<int>("RateLimiter:QueueLimit");
+        opt.SegmentsPerWindow = builder.Configuration.GetValue<int>("RateLimiter:SegmentsPerWindow");
+    });
+});
 
 
 var app = builder.Build();
@@ -142,7 +160,10 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+    //app.UseDeveloperExceptionPage();
 }
+
+app.UseRateLimiter();
 
 app.UseCors(MyAllowSpecificOrigins);
 
@@ -151,6 +172,6 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapControllers();
+app.MapControllers().RequireRateLimiting("fixed");
 
 app.Run();

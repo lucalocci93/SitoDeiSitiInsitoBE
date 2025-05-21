@@ -3,59 +3,84 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SitoDeiSiti.DTOs;
+using SitoDeiSiti.Validators;
 
 namespace Identity.Controllers
 {
     [Authorize]
     public class DocumentoController : BaseController
     {
+        private readonly GetUserDocumentValidator GetUserDocumentValidator;
+        private readonly GetDocumentValidator GetDocumentValidator;
+
         public DocumentoController(UserManager UserService, AbbonamentoManager AbbonamentoService,
             DocumentoManager documentoManager, EventiManager eventiManager)
             : base(UserService, AbbonamentoService, documentoManager, eventiManager)
         {
+            GetUserDocumentValidator = new();
+            GetDocumentValidator = new();
         }
 
         [HttpGet("GetUserDocuments")]
         public async Task<ActionResult> GetUserDocuments(Guid User)
         {
-            var resp = await documentoManager.GetAllDocumentByUser(User);
+            var validationResult = await GetUserDocumentValidator.ValidateAsync(User).ConfigureAwait(false);
 
-            if (resp != null)
+            if (validationResult != null && validationResult.IsValid)
             {
-                if (resp.success)
+                var resp = await documentoManager.GetAllDocumentByUser(User);
+
+                if (resp != null)
                 {
-                    return Ok(resp.Data);
+                    if (resp.success)
+                    {
+                        return Ok(resp.Data);
+                    }
+                    else
+                    {
+                        return BadRequest(resp.Error.Message);
+                    }
                 }
                 else
                 {
-                    return BadRequest(resp.Error.Message);
+                    return Problem();
                 }
             }
             else
             {
-                return Problem();
+                return BadRequest(validationResult.Errors.FirstOrDefault()?.ErrorMessage);
             }
         }
 
         [HttpGet("GetDocument")]
         public async Task<ActionResult> Details(Guid Id)
         {
-            var resp = await documentoManager.GetDocumentById(Id);
+            var validationResult = await GetDocumentValidator.ValidateAsync(Id).ConfigureAwait(false);
 
-            if (resp != null)
+            if (validationResult != null && validationResult.IsValid)
             {
-                if (resp.success)
+
+                var resp = await documentoManager.GetDocumentById(Id);
+
+                if (resp != null)
                 {
-                    return Ok(resp.Data);
+                    if (resp.success)
+                    {
+                        return Ok(resp.Data);
+                    }
+                    else
+                    {
+                        return BadRequest(resp.Error.Message);
+                    }
                 }
                 else
                 {
-                    return BadRequest(resp.Error.Message);
+                    return Problem();
                 }
             }
             else
             {
-                return Problem();
+                return BadRequest(validationResult != null ? validationResult.Errors.FirstOrDefault()?.ErrorMessage : string.Empty);
             }
         }
 
