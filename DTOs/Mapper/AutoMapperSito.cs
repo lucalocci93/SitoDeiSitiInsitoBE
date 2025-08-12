@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using SitoDeiSiti.Backend.DTOs;
 using SitoDeiSiti.DAL.Models;
 using System.Text.RegularExpressions;
 
@@ -68,6 +69,30 @@ namespace SitoDeiSiti.DTOs.Mapper
                 .ForMember(dest => dest.Descrizione, opt => opt.MapFrom(src => src.Description))
                 .ForMember(dest => dest.Provider, opt => opt.MapFrom(src => src.Provider))
                 .ForMember(dest => dest.Attivo, opt => opt.MapFrom(src => src.Active));
+
+            CreateMap<Template, TemplateDTO>()
+                .ForMember(dest => dest.TemplateName, opt => opt.MapFrom(src => src.TemplateName))
+                .ForMember(dest => dest.TemplateBodyHtml, opt => opt.MapFrom(src => src.TemplateBodyHtml))
+                .ForMember(dest => dest.TemplateHeaderHtml, opt => opt.MapFrom(src => src.TemplateHeaderHtml))
+                .ForMember(dest => dest.TemplateFooterHtml, opt => opt.MapFrom(src => src.TemplateFooterHtml));
+
+            CreateMap<TemplateDTO, Template>()
+                .ForMember(dest => dest.TemplateName, opt => opt.MapFrom(src => src.TemplateName))
+                .ForMember(dest => dest.TemplateBodyHtml, opt => opt.MapFrom(src => src.TemplateBodyHtml))
+                .ForMember(dest => dest.TemplateHeaderHtml, opt => opt.MapFrom(src => src.TemplateHeaderHtml))
+                .ForMember(dest => dest.TemplateFooterHtml, opt => opt.MapFrom(src => src.TemplateFooterHtml));
+
+            CreateMap<Notification, Notifica>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Pagina, opt => opt.MapFrom(src => src.Page))
+                .ForMember(dest => dest.Testo, opt => opt.MapFrom(src => src.Text))
+                .ForMember(dest => dest.Abilitata, opt => opt.MapFrom(src => src.Active));
+
+            CreateMap<Notifica, Notification>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Page, opt => opt.MapFrom(src => src.Pagina))
+                .ForMember(dest => dest.Text, opt => opt.MapFrom(src => src.Testo))
+                .ForMember(dest => dest.Active, opt => opt.MapFrom(src => src.Abilitata));
 
         }
 

@@ -1,7 +1,7 @@
 ﻿using Identity.Models;
-using Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SitoDeiSiti.Backend.Services;
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.Models;
 using SitoDeiSiti.Validators;
@@ -16,7 +16,6 @@ namespace Identity.Controllers
         private readonly GetEventoValidators GetEventoValidators;
         private readonly SubscribeEventValidator SubscribeEventValidator;
         private readonly GetEventSubscriptionByUserValidator GetEventSubscriptionByUserValidator;
-        private readonly DeleteSubscriptionValidator DeleteSubscriptionValidator;
 
         public EventiController(UserManager UserService, AbbonamentoManager AbbonamentoService,
             DocumentoManager DocumentoManager, EventiManager EventiManager)
@@ -25,7 +24,6 @@ namespace Identity.Controllers
             GetEventoValidators = new();
             SubscribeEventValidator = new();
             GetEventSubscriptionByUserValidator = new();
-            DeleteSubscriptionValidator = new();
         }
 
         [Authorize]
@@ -158,45 +156,38 @@ namespace Identity.Controllers
         public async Task<ActionResult> SubscribeEvent([FromBody] EventSubscription eventSubscription)
         {
             var res = await SubscribeEventValidator.ValidateAsync(eventSubscription).ConfigureAwait(false);
-           
+
             if (res != null && res.IsValid)
             {
-                if (eventSubscription != null && eventSubscription.Categories.Any())
-                {
-                    var resp = await eventiManager.SubscribeEvent(eventSubscription).ConfigureAwait(false);
+                var resp = await eventiManager.SubscribeEvent(eventSubscription).ConfigureAwait(false);
 
-                    if (resp != null)
+                if (resp != null)
+                {
+                    if (resp.success)
                     {
-                        if (resp.success)
-                        {
-                            return Ok(resp.Data);
-                        }
-                        else
-                        {
-                            if (resp.Error.Code.Equals((int)ErrorCode.IscrizioneEventoGiaEffettuata))
-                            {
-                                return Conflict(resp.Error);
-                            }
-                            else
-                            {
-                                return BadRequest(resp.Error.Message);
-                            }
-                        }
+                        return Ok(resp.Data);
                     }
                     else
                     {
-                        return Problem();
+                        if (resp.Error.Code.Equals((int)ErrorCode.IscrizioneEventoGiaEffettuata))
+                        {
+                            return Conflict(resp.Error);
+                        }
+                        else
+                        {
+                            return BadRequest(resp.Error.Message);
+                        }
                     }
                 }
                 else
                 {
-                    return NotFound();
+                    return Problem();
                 }
             }
             else
             {
                 return BadRequest(res != null ? res.Errors : string.Empty);
-            }        
+            }
         }
 
         [HttpGet("GetEventSubscriptionByUser")]
@@ -230,34 +221,42 @@ namespace Identity.Controllers
             }
         }
 
-        [HttpDelete("DeleteSubscription")]
-        public async Task<ActionResult> DeleteSubscription([FromQuery] Guid EventId, Guid UserId, int Category)
+        [Authorize]
+        [HttpPost("DeleteSubscription")]
+        public async Task<ActionResult> DeleteSubscription([FromBody] EventSubscription Subscription)
         {
-            var res = await DeleteSubscriptionValidator.ValidateAsync(new EventSubscription() { EventId = EventId, UserId = UserId, Categories = new List<int>() { Category } }).ConfigureAwait(false);
-
-            if (res != null && res.IsValid)
+            if (!Subscription.CompetitionId.HasValue)
             {
-                var resp = await eventiManager.DeleteEventSubscription(EventId, UserId, Category).ConfigureAwait(false);
+                return BadRequest("L'Id della gara non può essere nullo");
+            }
 
-                if (resp != null)
+            if (!Subscription.EventId.HasValue)
+            {
+                return BadRequest("la gara deve essere associata ad un evento");
+            }
+
+            if (!Subscription.EventId.HasValue)
+            {
+                return BadRequest("la gara deve essere associata ad un evento");
+            }
+
+
+            var resp = await eventiManager.DeleteEventSubscription(Subscription).ConfigureAwait(false);
+
+            if (resp != null)
+            {
+                if (resp.success)
                 {
-                    if (resp.success)
-                    {
-                        return Ok(resp.Data);
-                    }
-                    else
-                    {
-                        return BadRequest(resp.Error.Message);
-                    }
+                    return Ok(resp.Data);
                 }
                 else
                 {
-                    return Problem();
+                    return BadRequest(resp.Error.Message);
                 }
             }
             else
             {
-                return BadRequest(res != null ? res.Errors : string.Empty);
+                return Problem();
             }
         }
 
@@ -309,6 +308,186 @@ namespace Identity.Controllers
             }
 
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("AddCompetition")]
+        public async Task<ActionResult> AddCompetition([FromBody] Competition competition)
+        {
+            var resp = await eventiManager.AddCompetition(competition).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpDelete("DeleteCompetition")]
+        public async Task<ActionResult> DeleteCompetition([FromQuery] Guid? CompetitionId, Guid? EventId)
+        {
+            if (!CompetitionId.HasValue)
+            {
+                return BadRequest("L'Id della gara non può essere nullo");
+            }
+
+            if (!EventId.HasValue)
+            {
+                return BadRequest("la gara deve essere associata ad un evento");
+            }
+
+            var resp = await eventiManager.DeleteCompetition(CompetitionId.Value, EventId.Value).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+
+        }
+
+
+        [Authorize]
+        [HttpGet("GetCompetitions")]
+        public async Task<ActionResult> GetCompetitions([FromQuery] Guid? EventId)
+        {
+            if (!EventId.HasValue)
+            {
+                return BadRequest("la gara deve essere associata ad un evento");
+            }
+
+            var resp = await eventiManager.GetCompetitionByEvent(EventId.Value).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+
+        }
+
+        [Authorize]
+        [HttpGet("GetCompetitionsByEventAndUser")]
+        public async Task<ActionResult> GetCompetitionsByEventAndUser([FromQuery] Guid? EventId, Guid? UserId)
+        {
+            if (!EventId.HasValue)
+            {
+                return BadRequest("la gara deve essere associata ad un evento");
+            }
+
+            if (!UserId.HasValue)
+            {
+                return BadRequest("Deve essere specificato l'utente associato alle gare");
+            }
+
+
+            var resp = await eventiManager.GetCompetitionsByEventAndUser(EventId.Value, UserId.Value).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+
+        }
+
+        [Authorize]
+        [HttpGet("GetCompetitionSubscriptionReportByUser")]
+        public async Task<ActionResult> GetCompetitionSubscriptionReportByUser([FromQuery] Guid? EventId, Guid? UserId)
+        {
+            if (!EventId.HasValue)
+            {
+                return BadRequest("la gara deve essere associata ad un evento");
+            }
+            if (!UserId.HasValue)
+            {
+                return BadRequest("Deve essere specificato l'utente associato alle gare");
+            }
+            var resp = await eventiManager.GetCompetitionSubscriptionReportByUser(EventId.Value, UserId.Value).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+        }
+
+        [Authorize]
+        [HttpGet("GetCompetitionSubscriptionReportByMaster")]
+        public async Task<ActionResult> GetCompetitionSubscriptionReportByMaster([FromQuery] Guid? EventId, Guid? Org)
+        {
+            if (!EventId.HasValue)
+            {
+                return BadRequest("la gara deve essere associata ad un evento");
+            }
+            if (!Org.HasValue)
+            {
+                return BadRequest("Devi far parte di una organizzazione");
+            }
+            var resp = await eventiManager.GetCompetitionSubscriptionReportByMaster(EventId.Value, Org.Value).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+        }
+
 
     }
 }

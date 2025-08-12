@@ -1,26 +1,25 @@
 ﻿using AutoMapper;
-using Identity.Interfaces;
-using Identity.Services;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
+using SitoDeiSiti.Backend.Interfaces;
 using SitoDeiSiti.DAL;
 using SitoDeiSiti.DAL.Enums;
 using SitoDeiSiti.DAL.Interface;
 using SitoDeiSiti.DAL.Models;
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.DTOs.ConfigSettings;
-using SitoDeiSiti.Interfaces;
 using SitoDeiSiti.Models;
 using SitoDeiSiti.Validators;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+using System.Threading.Channels;
 
-namespace SitoDeiSiti.Services
+namespace SitoDeiSiti.Backend.Services
 {
     public class SitoManager : BaseManager, ISito
     {
-        private readonly DalSito dalSito;
+        private readonly IDalSito dalSito;
         private readonly HybridCache HybridCache;
         private readonly IOptions<UrlRedirezione> Config;
 
@@ -41,7 +40,8 @@ namespace SitoDeiSiti.Services
             GetImagesByPage,
             GetPages,
             GetRedirections,
-            GetVideos
+            GetVideos,
+            GetNotification
         }
 
         public async Task<Response<List<Graphics>>> GetGrafiche()
@@ -149,6 +149,10 @@ namespace SitoDeiSiti.Services
                 {
                     await HybridCache.RemoveAsync(string.Concat(nameof(CacheKey.GetImagesByPage), '_', (int)page)).ConfigureAwait(false);
                 }
+
+                await HybridCache.RemoveAsync(nameof(CacheKey.GetNotification)).ConfigureAwait(false);
+                await HybridCache.RemoveAsync(nameof(CacheKey.GetRedirections)).ConfigureAwait(false);
+                await HybridCache.RemoveAsync(nameof(CacheKey.GetPages)).ConfigureAwait(false);
 
                 return true;
             }
@@ -498,6 +502,79 @@ namespace SitoDeiSiti.Services
             catch (Exception ex)
             {
                 return new Response<Videos>(false, new Error(ex.Message));
+            }
+        }
+
+        public async Task<Response<Notification>> CreateNotification(Notification notification)
+        {
+            try
+            {
+                await HybridCache.RemoveAsync(nameof(CacheKey.GetNotification)).ConfigureAwait(false);
+
+                bool result = await dalSito.AddNotifica(Mapper.Map<Notifica>(notification)).ConfigureAwait(false);
+
+                if (result)
+                {
+                    return new Response<Notification>(true, notification);
+                }
+                else
+                {
+                    return new Response<Notification>(false, new Error("Notifica non creata"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return new Response<Notification>(false, new Error(ex.Message));
+            }
+        }
+
+        public async Task<Response<Notification>> UpdateNotification(Notification notification)
+        {
+            try
+            {
+                await HybridCache.RemoveAsync(nameof(CacheKey.GetNotification)).ConfigureAwait(false);
+
+                var result = await dalSito.UpdateNotifica(Mapper.Map<Notifica>(notification)).ConfigureAwait(false);
+
+                if (result)
+                {
+                    return new Response<Notification>(true, notification);
+                }
+                else
+                {
+                    return new Response<Notification>(false, new Error("Notifica non aggiornata"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return new Response<Notification>(false, new Error(ex.Message));
+            }
+        }
+
+        public async Task<Response<List<Notification>>> GetNotificheByPagina(int IdPagina)
+        {
+            List<Notification> notification = new();
+
+            try
+            {
+                string cacheKey = string.Concat(nameof(CacheKey.GetNotification),'_',IdPagina);
+
+                notification = await HybridCache.GetOrCreateAsync(cacheKey, async result => Mapper.Map<List<Notification>>(await dalSito.GetNotificheByPagina(IdPagina).ConfigureAwait(false)));
+
+                if (notification != null && notification.Any())
+                {
+                    return new Response<List<Notification>>(true, notification.Where(n => n.Active).ToList());
+                }
+                else
+                {
+                    return new Response<List<Notification>>(false, new Error("Nessun video trovato"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<Notification>>(false, new Error(ex.Message));
             }
         }
     }

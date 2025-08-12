@@ -1,10 +1,13 @@
-﻿using Identity.Services;
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using SitoDeiSiti.Backend.Services;
 using SitoDeiSiti.DTOs;
-using SitoDeiSiti.Services;
+using SitoDeiSiti.DTOs.ConfigSettings;
 using SitoDeiSiti.Validators;
+using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace SitoDeiSiti.Controllers
@@ -105,7 +108,7 @@ namespace SitoDeiSiti.Controllers
         public async Task<IActionResult> AddGrafica([FromBody] Graphics immagine)
         {
             var resp = await sito.AddGrafica(immagine).ConfigureAwait(false);
-            
+
             if (resp != null)
             {
                 if (resp.success)
@@ -146,7 +149,7 @@ namespace SitoDeiSiti.Controllers
             }
         }
 
-        [Authorize(Roles ="Admin")]
+        [Authorize(Roles = "Admin")]
         [HttpPut("ToggleGrafica")]
         public async Task<IActionResult> ToggleGrafica([FromBody] Graphics immagine)
         {
@@ -416,5 +419,72 @@ namespace SitoDeiSiti.Controllers
             }
         }
 
+        [Authorize(Roles = "Admin")]
+        [HttpPost("CreateNotification")]
+        public async Task<IActionResult> CreateNotification([FromBody] Notification notification)
+        {
+            var resp = await sito.CreateNotification(notification).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("UpdateNotification")]
+        public async Task<IActionResult> UpdateNotification([FromBody] Notification notification)
+        {
+            var resp = await sito.UpdateNotification(notification).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+
+        }
+
+        [AllowAnonymous]
+        [HttpGet("GetNotificheByPagina")]
+        public async Task<IActionResult> GetNotificheByPagina(int Pagina)
+        {
+            var resp = await sito.GetNotificheByPagina(Pagina).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+        }
     }
 }

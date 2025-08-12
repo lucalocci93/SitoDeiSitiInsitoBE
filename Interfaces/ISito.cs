@@ -1,7 +1,7 @@
 ﻿using SitoDeiSiti.DTOs;
 using SitoDeiSiti.Models;
 
-namespace SitoDeiSiti.Interfaces
+namespace SitoDeiSiti.Backend.Interfaces
 {
     public interface ISito
     {
@@ -25,5 +25,10 @@ namespace SitoDeiSiti.Interfaces
         Task<Response<Videos>> AddVideo(Videos video);
         Task<Response<Videos>> RemoveVideo(int Id);
         Task<Response<Videos>> ToggleVideo(Videos video);
+
+        Task<Response<Notification>> CreateNotification(Notification notification);
+        Task<Response<Notification>> UpdateNotification(Notification notification);
+        Task<Response<List<Notification>>> GetNotificheByPagina(int IdPagina);
+
     }
 }

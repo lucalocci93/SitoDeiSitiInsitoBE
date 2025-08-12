@@ -26,6 +26,10 @@ namespace SitoDeiSiti.Validators
             RuleFor(x => x.UserId)
                 .NotEmpty()
                 .WithMessage("L'ID dell'utente non può essere vuoto.");
+            RuleFor(x => x.CompetitionId)
+                .NotEmpty()
+                .WithMessage("L'ID della gara non può essere vuoto.");
+
         }
     }
 
@@ -36,22 +40,6 @@ namespace SitoDeiSiti.Validators
             RuleFor(x => x)
                 .NotEmpty()
                 .WithMessage("L'ID dell'utente non può essere vuoto.");
-        }
-    }
-
-    public class DeleteSubscriptionValidator : AbstractValidator<EventSubscription>
-    {
-        public DeleteSubscriptionValidator()
-        {
-            RuleFor(x => x.EventId)
-                .NotEmpty()
-                .WithMessage("L'ID dell'evento non può essere vuoto.");
-            RuleFor(x => x.UserId)
-                .NotEmpty()
-                .WithMessage("L'ID dell'utente non può essere vuoto.");
-            RuleFor(x => x.Categories)
-                .NotEmpty()
-                .WithMessage("La lista delle categorie non può essere vuota.");
         }
     }
 }

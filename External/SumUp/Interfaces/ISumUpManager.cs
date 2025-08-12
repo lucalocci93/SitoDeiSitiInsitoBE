@@ -1,4 +1,4 @@
-﻿using SitoDeiSiti.External.SumUp.Models.SumUp;
+﻿using SitoDeiSiti.Backend.External.SumUp.Models.SumUp;
 using SitoDeiSiti.Utils.HTTPHandlers.Model;
 using System;
 using System.Collections.Generic;
@@ -11,6 +11,6 @@ namespace SitoDeiSiti.External.SumUp.Interfaces
     public interface ISumUpManager
     {
         Task<HostedCheckoutOutput> CreateHostedCheckout(HostedCheckoutInput input);
-
+        Task<List<SumUpListCheckoutOutput>> GetSumUpCheckoutList();
     }
 }

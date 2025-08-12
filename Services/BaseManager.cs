@@ -1,12 +1,11 @@
 ﻿using AutoMapper;
-using Identity.Interfaces;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using SitoDeiSiti.Models.ConfigSettings;
 using System.Runtime;
 
-namespace Identity.Services
+namespace SitoDeiSiti.Backend.Services
 {
     public class BaseManager
     {

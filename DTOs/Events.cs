@@ -14,6 +14,9 @@ namespace SitoDeiSiti.DTOs
         public string Descrizione { get; set; }
         public string Link { get; set; }
 
+        public decimal? ImportoIscrizione { get; set; }
+        public DateTime? ChiusuraIscrizioni { get; set; }
+
         public Events()
         {
             Categorie = new List<Category>();
@@ -49,15 +52,11 @@ namespace SitoDeiSiti.DTOs
 
     public record EventSubscription
     {
-        public Guid EventId { get; set; }
-        public Guid UserId { get; set; }
-        public List<int> Categories { get; set; }
-        public string Note { get; set; }
-
-        public EventSubscription()
-        {
-            Categories = new List<int>();
-        }
+        public Guid? EventId { get; set; }
+        public Guid? UserId { get; set; }
+        public string Note { get; set; } = string.Empty;
+        public Guid? CompetitionId { get;set; }
+        public bool? IsDeleted { get; set; }
     }
 
     public record SingleEventSubscription
@@ -65,7 +64,7 @@ namespace SitoDeiSiti.DTOs
         public Guid EventId { get; set; }
         public Guid UserId { get; set; }
         public int Categoria { get; set; }
-        public string Note { get; set; }
+        public string Note { get; set; } = string.Empty;
     }
 
     public record Competitor
@@ -80,5 +79,16 @@ namespace SitoDeiSiti.DTOs
             Iscrizione = new();
             Evento = new();
         }
+    }
+
+    public record Competition
+    {
+        public Guid? Id { get; set; }
+        public Guid Event { get; set; }
+        public string Name { get; set; }
+        public int Category { get; set; }
+        public decimal CompetitionFee { get; set; }
+        public bool Subscribed { get; set; } = false;
+        public Guid UserId { get; set; }
     }
 }

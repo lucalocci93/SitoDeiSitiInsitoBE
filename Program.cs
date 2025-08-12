@@ -1,11 +1,11 @@
-using Identity.Interfaces;
 using Identity.Models.Mapper;
-using Identity.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using SitoDeiSiti.Backend.Interfaces;
+using SitoDeiSiti.Backend.Services;
 using SitoDeiSiti.DAL;
 using SitoDeiSiti.DAL.Interface;
 using SitoDeiSiti.DAL.Models;
@@ -14,9 +14,7 @@ using SitoDeiSiti.DTOs.ConfigSettings;
 using SitoDeiSiti.DTOs.Mapper;
 using SitoDeiSiti.External.SumUp;
 using SitoDeiSiti.External.SumUp.Interfaces;
-using SitoDeiSiti.Interfaces;
 using SitoDeiSiti.Models.ConfigSettings;
-using SitoDeiSiti.Services;
 using SitoDeiSiti.Utils.HTTPHandlers;
 using SitoDeiSitiService.Models.Mapper;
 using System;
@@ -100,6 +98,8 @@ builder.Services.AddScoped<EventiManager>();
 builder.Services.AddScoped<SumUpManager>();
 builder.Services.AddScoped<SitoManager>();
 
+//builder.Services.AddSingleton<IEventServicemanager, EventServiceManager>();
+
 //AUTH
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -119,10 +119,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 //EF
-builder.Services.AddDbContext<SitoDeiSitiInsitoContext>(options =>
+builder.Services.AddDbContextPool<SitoDeiSitiInsitoContext>(options =>
 {
     options.UseSqlServer(builder.Configuration.GetConnectionString("SitoDeiSitiInsitoDatabase"));
-}, ServiceLifetime.Scoped);
+});
 
 //AUTOMAPPER
 builder.Services.AddAutoMapper(typeof(AutoMapperUtenteProfile), typeof(AutoMapperAbbonamentoProfile),
@@ -152,11 +152,16 @@ builder.Services.AddRateLimiter(options =>
     });
 });
 
+builder.Services.AddHealthChecks()
+    .AddSqlServer(builder.Configuration.GetConnectionString("SitoDeiSitiInsitoDatabase")!)
+    .AddDbContextCheck<SitoDeiSitiInsitoContext>();
 
 var app = builder.Build();
 
+app.MapHealthChecks("/healtz");
+
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+if (builder.Configuration.GetValue<bool>("EnableSwagger:Enable")!)//(app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();

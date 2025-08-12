@@ -2,7 +2,7 @@
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.Models;
 
-namespace Identity.Interfaces
+namespace SitoDeiSiti.Backend.Interfaces
 {
     public interface IDocument
     {

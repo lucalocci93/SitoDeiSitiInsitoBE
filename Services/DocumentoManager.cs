@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using Microsoft.Extensions.Options;
-using Identity.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using SitoDeiSiti.DAL.Interface;
 using SitoDeiSiti.DAL;
@@ -10,8 +9,9 @@ using SitoDeiSiti.Models.ConfigSettings;
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.Models;
 using Microsoft.Extensions.Caching.Hybrid;
+using SitoDeiSiti.Backend.Interfaces;
 
-namespace Identity.Services
+namespace SitoDeiSiti.Backend.Services
 {
     public class DocumentoManager : BaseManager, IDocument
     {

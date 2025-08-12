@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
+using SitoDeiSiti.Backend.External.SumUp.Models.SumUp;
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.External.SumUp.Interfaces;
-using SitoDeiSiti.External.SumUp.Models.SumUp;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -33,7 +33,7 @@ namespace SitoDeiSiti.External.SumUp
                 request.Content = content;
                 //request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-                SumUpHttpClient.BaseAddress = new Uri(options.Value.SumUpCheckoutUrl);
+                SumUpHttpClient.BaseAddress = new Uri(string.Concat(options.Value.SumUpCheckoutUrl, "checkouts"));
 
                 HttpResponseMessage response = await SumUpHttpClient.SendAsync(request).ConfigureAwait(false);
                 if (response.IsSuccessStatusCode)
@@ -51,6 +51,40 @@ namespace SitoDeiSiti.External.SumUp
             catch (Exception ex)
             {
                 throw new Exception(ex.Message);
+            }
+        }
+
+        public async Task<List<SumUpListCheckoutOutput>> GetSumUpCheckoutList()
+        {
+            List<SumUpListCheckoutOutput> checkouts = new List<SumUpListCheckoutOutput>();
+            string responseString = string.Empty;
+            try 
+            {
+                HttpRequestMessage request = new HttpRequestMessage();
+                request.Method = HttpMethod.Get;
+
+                SumUpHttpClient.BaseAddress = new Uri(string.Concat(options.Value.SumUpCheckoutUrl, "checkouts"));
+
+                HttpResponseMessage response = await SumUpHttpClient.SendAsync(request).ConfigureAwait(false);
+                if (response.IsSuccessStatusCode)
+                {
+                    responseString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                }
+                else
+                {
+                    responseString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                }
+
+                return JsonSerializer.Deserialize<List<SumUpListCheckoutOutput>>(responseString) ?? new List<SumUpListCheckoutOutput>();
+            }
+            catch (Exception ex)
+            {
+                checkouts.Add(new SumUpListCheckoutOutput
+                {
+                    error_code = "-404",
+                });
+
+                return checkouts;
             }
         }
     }

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace SitoDeiSiti.External.SumUp.Models.SumUp
+namespace SitoDeiSiti.Backend.External.SumUp.Models.SumUp
 {
     public class HostedCheckoutSettings
     {
@@ -30,7 +30,7 @@ namespace SitoDeiSiti.External.SumUp.Models.SumUp
         }
     }
 
-    public class HostedCheckoutOutput
+    public class HostedCheckoutOutput : SumUpError
     {
         public int amount { get; set; }
         public string checkout_reference { get; set; }

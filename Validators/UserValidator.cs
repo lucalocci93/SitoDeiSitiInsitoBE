@@ -26,8 +26,8 @@ namespace SitoDeiSiti.Validators
             RuleFor(x => x.Password)
                 .NotEmpty()
                 .WithMessage("La password non può essere vuota")
-                .Length(6, 100)
-                .WithMessage("La password deve avere tra 6 e 100 caratteri");
+                .MinimumLength(6)
+                .WithMessage("La password deve avere almeno 6 caratteri");
         }
     }
 
@@ -42,9 +42,9 @@ namespace SitoDeiSiti.Validators
                 .WithMessage("L'email non è valida").WithErrorCode("NotValidEmail");
             RuleFor(x => x.Password)
                 .NotEqual("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
-                .WithMessage("La password non può essere vuota").WithErrorCode("EmptyPassword");
-            //    .Length(6, 100)
-            //    .WithMessage("La password deve avere tra 6 e 100 caratteri");
+                .WithMessage("La password non può essere vuota").WithErrorCode("EmptyPassword")
+                .MinimumLength(6)
+                .WithMessage("La password deve avere almeno 6 caratteri");
         }
     }
 }

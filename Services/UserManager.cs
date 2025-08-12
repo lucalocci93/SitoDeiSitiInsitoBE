@@ -1,6 +1,5 @@
 ﻿using AutoMapper;
 using DAL.Enums;
-using Identity.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -14,13 +13,20 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using SitoDeiSiti.Utils.Encryption;
 using Microsoft.Extensions.Caching.Hybrid;
+using SitoDeiSiti.Backend.Interfaces;
 
-namespace Identity.Services
+namespace SitoDeiSiti.Backend.Services
 {
     public class UserManager : BaseManager, IUser
     {
         private readonly IDalUtente dalUtente;
         private readonly IOptions<Token> TokenSettings;
+
+        private enum CacheKey
+        {
+            GetCinture,
+            GetOrganizzazioni
+        }
 
         public UserManager(IOptions<Token> tokenSettings, SitoDeiSitiInsitoContext context, IMapper mapper, HybridCache hybridCache) 
             : base(mapper, hybridCache)
@@ -47,8 +53,9 @@ namespace Identity.Services
                 Utente utente = Mapper.Map<Utente>(_user);
                 UtenteInfo utenteInfo = Mapper.Map<UtenteInfo>(_user);
                 UtentePrivacy utentePrivacy = Mapper.Map<UtentePrivacy>(_user);
+                UtenteAtleta utenteAtleta = Mapper.Map<UtenteAtleta>(_user);
 
-                bool result = await dalUtente.CreateUtente(utente, utenteInfo, utentePrivacy).ConfigureAwait(false);
+                bool result = await dalUtente.CreateUtente(utente, utenteInfo, utentePrivacy, utenteAtleta).ConfigureAwait(false);
 
                 if (result) 
                 {
@@ -85,6 +92,7 @@ namespace Identity.Services
                 if (utente != null)
                 {
                     user = Mapper.Map<Utente, User>(utente);
+                    Guid? org = utente.UtenteAtleta?.Organizzazione;
 
                     var claims = new[]
                     {
@@ -93,6 +101,8 @@ namespace Identity.Services
                         new Claim(ClaimTypes.Email, user.Email),
                         new Claim("CodFiscale", user.CodFiscale),
                         new Claim(ClaimTypes.Role, user.IsAdmin.HasValue && user.IsAdmin.Value ? "Admin" : "User"),
+                        new Claim("SportRole", user.IsMaestro.HasValue && user.IsMaestro.Value ? "Maestro" : "Atleta"),
+                        new Claim("Org", org.HasValue ? org.Value.ToString() : "nessuna"),
                         new Claim("sub", user.RowGuid.ToString())
                         // Other custom data (claims)
                     };
@@ -140,6 +150,52 @@ namespace Identity.Services
             }
         }
 
+        public async Task<Response<List<Belts>>> GetCinture()
+        {
+            List<Belts> belts = new();
+
+            try
+            {
+                belts = await HybridCache.GetOrCreateAsync<List<Belts>>(nameof(CacheKey.GetCinture), async result => Mapper.Map<List<Belts>>(await dalUtente.GetCinture().ConfigureAwait(false)));
+
+                if (belts != null && belts.Any())
+                {
+                    return new Response<List<Belts>>(true, belts);
+                }
+                else
+                {
+                    return new Response<List<Belts>>(false, new Error("Nessuna categoria trovata"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<Belts>>(false, new Error(ex.Message));
+            }
+        }
+
+        public async Task<Response<List<Organization>>> GetOrganizzazioni()
+        {
+            List<Organization> organization = new();
+
+            try
+            {
+                organization = await HybridCache.GetOrCreateAsync<List<Organization>>(nameof(CacheKey.GetOrganizzazioni), async result => Mapper.Map<List<Organization>>(await dalUtente.GetOrganizzazioni().ConfigureAwait(false)));
+
+                if (organization != null && organization.Any())
+                {
+                    return new Response<List<Organization>>(true, organization);
+                }
+                else
+                {
+                    return new Response<List<Organization>>(false, new Error("Nessuna categoria trovata"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<Organization>>(false, new Error(ex.Message));
+            }
+        }
+
         public async Task<Response<User>> GetUser(Guid RowGuid)
         {
             var user = new User();
@@ -174,11 +230,12 @@ namespace Identity.Services
                 Utente utente = Mapper.Map<User, Utente>(_user);
                 UtenteInfo utenteInfo = Mapper.Map<User, UtenteInfo>(_user);
                 UtentePrivacy utentePrivacy = Mapper.Map<User,UtentePrivacy>(_user);
+                UtenteAtleta utenteAtleta = Mapper.Map<User, UtenteAtleta>(_user);
 
                 if (utente != null && utenteInfo != null && utentePrivacy != null)
                 {
 
-                    updatedRow = await dalUtente.UpdateUser(operation, utente, utenteInfo,utentePrivacy).ConfigureAwait(false);
+                    updatedRow = await dalUtente.UpdateUser(operation, utente, utenteInfo, utentePrivacy, utenteAtleta).ConfigureAwait(false);
 
                     if (updatedRow != 0)
                     {
@@ -197,6 +254,24 @@ namespace Identity.Services
             catch (Exception ex)
             {
                 return new Response<User>(false, new Error(ex.Message));
+            }
+        }
+
+        public async Task<Response<List<User>>> GetAtletiOrganizzazione(Guid Org)
+        {
+            var users = new List<User>();
+
+            try
+            {
+                users = Mapper.Map<List<Utente>, List<User>>(await dalUtente.GetUtentiOrganizzazioni(Org).ConfigureAwait(false));
+
+                //Encryption.Decrypt<List<User>>(users);
+
+                return new Response<List<User>>(true, users);
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<User>>(false, new Error(ex.Message));
             }
         }
     }

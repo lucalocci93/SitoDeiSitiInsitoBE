@@ -1,7 +1,4 @@
 ﻿using AutoMapper;
-using Microsoft.Extensions.Options;
-using Identity.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using DAL.Enums;
 using SitoDeiSiti.DAL.Interface;
 using SitoDeiSiti.DAL;
@@ -9,12 +6,13 @@ using SitoDeiSiti.DAL.Models;
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.Models;
 using SitoDeiSiti.External.SumUp;
-using SitoDeiSiti.External.SumUp.Models.SumUp;
 using SitoDeiSiti.Utils.HTTPHandlers.Model;
 using SitoDeiSiti.External.SumUp.Interfaces;
 using Microsoft.Extensions.Caching.Hybrid;
+using SitoDeiSiti.Backend.External.SumUp.Models.SumUp;
+using SitoDeiSiti.Backend.Interfaces;
 
-namespace Identity.Services
+namespace SitoDeiSiti.Backend.Services
 {
     public class AbbonamentoManager : BaseManager, ISubscription
     {

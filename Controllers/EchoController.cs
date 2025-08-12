@@ -7,19 +7,21 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using SitoDeiSiti.DAL.Models;
 using SitoDeiSiti.DTOs;
+using SitoDeiSiti.External.SumUp;
 using System.Net.NetworkInformation;
+using System.Threading.Tasks;
 
 namespace SitoDeiSiti.Controllers
 {
     public class EchoController : ControllerBase
     {
         private readonly SitoDeiSitiInsitoContext db;
-        private readonly IOptions<SitoDeiSiti.DTOs.SumUp> sumUp;
+        private readonly SumUpManager SumUp;
 
-        public EchoController(SitoDeiSitiInsitoContext context, IOptions<SumUp> options)
+        public EchoController(SitoDeiSitiInsitoContext context, SumUpManager sumUpManager)
         {
             db = context;
-            sumUp = options;
+            SumUp = sumUpManager;
         }
 
         [AllowAnonymous]
@@ -31,7 +33,7 @@ namespace SitoDeiSiti.Controllers
 
         [AllowAnonymous]
         [HttpGet("CompleteEcho")]
-        public IActionResult CompleteEcho()
+        public async Task<IActionResult> CompleteEcho()
         {
             Echo echo = new();
 
@@ -56,30 +58,11 @@ namespace SitoDeiSiti.Controllers
                 echo.CanExecuteQuery = false;
             }
 
-            Ping ping = new();
-
             try
             {
-                PingReply reply = ping.Send(sumUp.Value.SumUpCheckoutUrl);
-                if (reply.Status == IPStatus.Success)
-                {
-                    echo.CanReachSumUp = true;
-                }
-                else
-                {
-                    echo.CanReachSumUp = false;
-                }
-
-                //PingReply replytoken = ping.Send(sumUp.Value.SumUpAuthUrl);
-                //{
-                //    if (replytoken.Status == IPStatus.Success)
-                //    {
-                //    }
-                //    else
-                //    {
-                //        echo.CanReachSumUp = false;
-                //    }
-                //}
+                var SumUpCheckoutList = await SumUp.GetSumUpCheckoutList().ConfigureAwait(false);
+                echo.CanReachSumUp = SumUpCheckoutList != null &&
+                    !SumUpCheckoutList.Any(s => s.error_code.Equals("-404"));
             }
             catch (Exception ex)
             {

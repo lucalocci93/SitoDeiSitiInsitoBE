@@ -31,15 +31,38 @@ namespace SitoDeiSitiService.Models.Mapper
                 .ForMember(dest => dest.Descrizione, opt => opt.MapFrom(src => src.Descrizione))
                 .ForMember(dest => dest.Link, opt => opt.MapFrom(src => src.Link));
 
-            CreateMap<IscrizioneEvento, SingleEventSubscription>()
+            CreateMap<IscrizioneEvento, EventSubscription>()
                 .ForMember(dest => dest.EventId, opt => opt.MapFrom(src => src.IdEvento))
                 .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.IdUtente))
-                .ForMember(dest => dest.Categoria, opt => opt.MapFrom(src => src.Categoria))
+                .ForMember(dest => dest.CompetitionId, opt => opt.MapFrom(src => src.Gara))
+                .ForMember(dest => dest.IsDeleted, opt => opt.MapFrom(src => src.Cancellata))
                 .ForMember(dest => dest.Note, opt => opt.MapFrom(src => src.Note));
+
+            CreateMap<EventSubscription, IscrizioneEvento>()
+                .ForMember(dest => dest.IdEvento, opt => opt.MapFrom(src => src.EventId.Value))
+                .ForMember(dest => dest.IdUtente, opt => opt.MapFrom(src => src.UserId.Value))
+                .ForMember(dest => dest.Gara, opt => opt.MapFrom(src => src.CompetitionId.Value))
+                .ForMember(dest => dest.Cancellata, opt => opt.MapFrom(src => src.IsDeleted))
+                .ForMember(dest => dest.Note, opt => opt.MapFrom(src => src.Note));
+
 
             CreateMap<Categoria, Category>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
                 .ForMember(dest => dest.Descrizione, opt => opt.MapFrom(src => src.Descrizione));
+
+            CreateMap<Competition, Gare>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Evento, opt => opt.MapFrom(src => src.Event))
+                .ForMember(dest => dest.Categoria, opt => opt.MapFrom(src => src.Category))
+                .ForMember(dest => dest.ImportoIscrizione, opt => opt.MapFrom(src => src.CompetitionFee))
+                .ForMember(dest => dest.Nome, opt => opt.MapFrom(src => src.Name));
+
+            CreateMap<Gare, Competition>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.Id))
+                .ForMember(dest => dest.Event, opt => opt.MapFrom(src => src.Evento))
+                .ForMember(dest => dest.Category, opt => opt.MapFrom(src => src.Categoria))
+                .ForMember(dest => dest.CompetitionFee, opt => opt.MapFrom(src => src.ImportoIscrizione))
+                .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.Nome));
         }
     }
 }

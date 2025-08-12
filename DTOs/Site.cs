@@ -52,4 +52,17 @@ namespace SitoDeiSiti.DTOs
         public bool Active { get; set; }
     }
 
+    public record Notification
+    {
+        public Guid Id { get; set; }
+        public int Page { get; set; }
+        public string? Text { get; set; }
+        public bool Active { get; set; }
+    }
+
+    public record NotificationEvent
+    {
+        public bool SendEvent { get; set; } = false;
+        public List<Notification>? Notifications { get; set; }
+    }
 }

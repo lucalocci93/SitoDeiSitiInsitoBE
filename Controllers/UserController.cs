@@ -1,11 +1,11 @@
 ﻿using DAL.Enums;
 using FluentValidation;
 using FluentValidation.Results;
-using Identity.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using SitoDeiSiti.Backend.Services;
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.Models;
 using SitoDeiSiti.Validators;
@@ -34,7 +34,7 @@ namespace Identity.Controllers
             var res = await authValidator.ValidateAsync(new User() { Email = Username, Password = Password }).ConfigureAwait(false);
 
             if (res.IsValid)
-            { 
+            {
                 Response<JWT> response = await userManager.GenerateToken(Username, Password);
 
                 if (response != null)
@@ -62,7 +62,8 @@ namespace Identity.Controllers
             }
             else
             {
-                return BadRequest(res.Errors.FirstOrDefault()?.ErrorMessage);
+                return BadRequest(res.Errors.Any() ? res.Errors.FirstOrDefault()?.ErrorMessage :
+                    "Errore, riptovare piu tardi, se il problema persiste contattare un amministratore");
             }
         }
 
@@ -71,8 +72,8 @@ namespace Identity.Controllers
         public async Task<ActionResult> Users()
         {
             var resp = await userManager.GetAllUser();
-            
-            if(resp != null)
+
+            if (resp != null)
             {
                 if (resp.success)
                 {
@@ -142,7 +143,8 @@ namespace Identity.Controllers
                 }
                 else
                 {
-                    return BadRequest();
+                    return BadRequest(res.Errors.Any() ? res.Errors.FirstOrDefault()?.ErrorMessage 
+                        : "Errore, riptovare piu tardi, se il problema persiste contattare un amministratore");
                 }
             }
             else
@@ -174,5 +176,73 @@ namespace Identity.Controllers
             }
 
         }
+
+        [AllowAnonymous]
+        [HttpGet("GetCinture")]
+        public async Task<ActionResult> GetCinture()
+        {
+            var resp = await userManager.GetCinture().ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("GetOrganizzazioni")]
+        public async Task<ActionResult> GetOrganizzazioni()
+        {
+            var resp = await userManager.GetOrganizzazioni().ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+        }
+
+        [Authorize]
+        [HttpGet("GetAtletiOrganizzazione")]
+        public async Task<ActionResult> GetAtletiOrganizzazione(Guid Org)
+        {
+            var resp = await userManager.GetAtletiOrganizzazione(Org).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+
+        }
     }
+
 }

@@ -1,5 +1,4 @@
-﻿using Identity.Interfaces;
-namespace SitoDeiSiti.DTOs
+﻿namespace SitoDeiSiti.DTOs
 {
     public record Document
     {
