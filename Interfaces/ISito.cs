@@ -1,4 +1,6 @@
-﻿using SitoDeiSiti.DTOs;
+﻿using SitoDeiSiti.Backend.DTOs;
+using SitoDeiSiti.DAL.Models;
+using SitoDeiSiti.DTOs;
 using SitoDeiSiti.Models;
 
 namespace SitoDeiSiti.Backend.Interfaces
@@ -29,6 +31,12 @@ namespace SitoDeiSiti.Backend.Interfaces
         Task<Response<Notification>> CreateNotification(Notification notification);
         Task<Response<Notification>> UpdateNotification(Notification notification);
         Task<Response<List<Notification>>> GetNotificheByPagina(int IdPagina);
+        Task<Response<List<Notification>>> GetNotifiche();
+
+        Task<Response<List<TemplateDTO>>> GetTemplates();
+        Task<Response<TemplateDTO>> UpdateTemplate(TemplateDTO template);
+        Task<Response<TemplateDTO>> CreateTemplate(TemplateDTO template);
+
 
     }
 }

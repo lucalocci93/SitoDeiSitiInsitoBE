@@ -7,6 +7,7 @@ using SitoDeiSiti.Validators;
 
 namespace Identity.Controllers
 {
+    [Route("[controller]")]
     public class AbbonamentoController : BaseController
     {
         private readonly GetUserSubscriptionsValidator GetUserSubscriptionsValidator;

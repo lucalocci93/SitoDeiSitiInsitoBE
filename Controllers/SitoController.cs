@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using SitoDeiSiti.Backend.DTOs;
 using SitoDeiSiti.Backend.Services;
 using SitoDeiSiti.DTOs;
 using SitoDeiSiti.DTOs.ConfigSettings;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace SitoDeiSiti.Controllers
 {
+    [Route("[controller]")]
     public class SitoController : ControllerBase
     {
         private readonly SitoManager sito;
@@ -486,5 +488,98 @@ namespace SitoDeiSiti.Controllers
                 return Problem();
             }
         }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("GetNotifiche")]
+        public async Task<IActionResult> GetNotifiche()
+        {
+            var resp = await sito.GetNotifiche().ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+        }
+
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost("CreateTemplate")]
+        public async Task<IActionResult> CreateTemplate([FromBody] TemplateDTO template)
+        {
+            var resp = await sito.CreateTemplate(template).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("UpdateTemplate")]
+        public async Task<IActionResult> UpdateTemplate([FromBody] TemplateDTO template)
+        {
+            var resp = await sito.UpdateTemplate(template).ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpGet("GetTemplates")]
+        public async Task<IActionResult> GetTemplates()
+        {
+            var resp = await sito.GetTemplates().ConfigureAwait(false);
+            if (resp != null)
+            {
+                if (resp.success)
+                {
+                    return Ok(resp.Data);
+                }
+                else
+                {
+                    return BadRequest(resp.Error.Message);
+                }
+            }
+            else
+            {
+                return Problem();
+            }
+        }
+
     }
+
 }

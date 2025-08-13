@@ -54,7 +54,7 @@ namespace SitoDeiSiti.DTOs
 
     public record Notification
     {
-        public Guid Id { get; set; }
+        public Guid? Id { get; set; }
         public int Page { get; set; }
         public string? Text { get; set; }
         public bool Active { get; set; }

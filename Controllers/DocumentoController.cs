@@ -7,6 +7,7 @@ using SitoDeiSiti.Validators;
 
 namespace Identity.Controllers
 {
+    [Route("[controller]")]
     [Authorize]
     public class DocumentoController : BaseController
     {

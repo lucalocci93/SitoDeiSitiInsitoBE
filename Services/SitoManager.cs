@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
+using SitoDeiSiti.Backend.DTOs;
 using SitoDeiSiti.Backend.Interfaces;
 using SitoDeiSiti.DAL;
 using SitoDeiSiti.DAL.Enums;
@@ -20,7 +21,6 @@ namespace SitoDeiSiti.Backend.Services
     public class SitoManager : BaseManager, ISito
     {
         private readonly IDalSito dalSito;
-        private readonly HybridCache HybridCache;
         private readonly IOptions<UrlRedirezione> Config;
 
         public SitoManager(SitoDeiSitiInsitoContext context, IMapper mapper, HybridCache hybridCache,
@@ -28,7 +28,6 @@ namespace SitoDeiSiti.Backend.Services
             : base(mapper, hybridCache)
         {
             dalSito = new DalSito(context);
-            HybridCache = hybridCache;
             Config = config;
         }
 
@@ -41,7 +40,8 @@ namespace SitoDeiSiti.Backend.Services
             GetPages,
             GetRedirections,
             GetVideos,
-            GetNotification
+            GetNotification,
+            GetTemplates
         }
 
         public async Task<Response<List<Graphics>>> GetGrafiche()
@@ -559,13 +559,38 @@ namespace SitoDeiSiti.Backend.Services
 
             try
             {
-                string cacheKey = string.Concat(nameof(CacheKey.GetNotification),'_',IdPagina);
+                string cacheKey = nameof(CacheKey.GetNotification);
 
-                notification = await HybridCache.GetOrCreateAsync(cacheKey, async result => Mapper.Map<List<Notification>>(await dalSito.GetNotificheByPagina(IdPagina).ConfigureAwait(false)));
+                notification = await HybridCache.GetOrCreateAsync(cacheKey, async result => Mapper.Map<List<Notification>>(await dalSito.GetNotifiche().ConfigureAwait(false)));
 
                 if (notification != null && notification.Any())
                 {
-                    return new Response<List<Notification>>(true, notification.Where(n => n.Active).ToList());
+                    return new Response<List<Notification>>(true, notification.Where(n => n.Active && n.Page.Equals(IdPagina)).ToList());
+                }
+                else
+                {
+                    return new Response<List<Notification>>(false, new Error("Nessuna notifica trovata"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<Notification>>(false, new Error(ex.Message));
+            }
+        }
+
+        public async Task<Response<List<Notification>>> GetNotifiche()
+        {
+            List<Notification> notification = new();
+
+            try
+            {
+                string cacheKey = nameof(CacheKey.GetNotification);
+
+                notification = await HybridCache.GetOrCreateAsync(cacheKey, async result => Mapper.Map<List<Notification>>(await dalSito.GetNotifiche().ConfigureAwait(false)));
+
+                if (notification != null && notification.Any())
+                {
+                    return new Response<List<Notification>>(true, notification.ToList());
                 }
                 else
                 {
@@ -575,6 +600,79 @@ namespace SitoDeiSiti.Backend.Services
             catch (Exception ex)
             {
                 return new Response<List<Notification>>(false, new Error(ex.Message));
+            }
+        }
+
+        public async Task<Response<List<TemplateDTO>>> GetTemplates()
+        {
+            List<TemplateDTO> templates = new();
+
+            try
+            {
+                string cacheKey = nameof(CacheKey.GetTemplates);
+
+                templates = await HybridCache.GetOrCreateAsync(cacheKey, async result => Mapper.Map<List<TemplateDTO>>(await dalSito.GetTemplates().ConfigureAwait(false)));
+
+                if (templates != null && templates.Any())
+                {
+                    return new Response<List<TemplateDTO>>(true, templates.ToList());
+                }
+                else
+                {
+                    return new Response<List<TemplateDTO>>(false, new Error("Nessun video trovato"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return new Response<List<TemplateDTO>>(false, new Error(ex.Message));
+            }
+        }
+
+        public async Task<Response<TemplateDTO>> UpdateTemplate(TemplateDTO template)
+        {
+            try
+            {
+                await HybridCache.RemoveAsync(nameof(CacheKey.GetTemplates)).ConfigureAwait(false);
+
+                var result = await dalSito.UpdateTemplate(Mapper.Map<Template>(template)).ConfigureAwait(false);
+
+                if (result)
+                {
+                    return new Response<TemplateDTO>(true, template);
+                }
+                else
+                {
+                    return new Response<TemplateDTO>(false, new Error("Notifica non aggiornata"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return new Response<TemplateDTO>(false, new Error(ex.Message));
+            }
+        }
+
+        public async Task<Response<TemplateDTO>> CreateTemplate(TemplateDTO template)
+        {
+            try
+            {
+                await HybridCache.RemoveAsync(nameof(CacheKey.GetTemplates)).ConfigureAwait(false);
+
+                bool result = await dalSito.AddTemplate(Mapper.Map<Template>(template)).ConfigureAwait(false);
+
+                if (result)
+                {
+                    return new Response<TemplateDTO>(true, template);
+                }
+                else
+                {
+                    return new Response<TemplateDTO>(false, new Error("Notifica non creata"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return new Response<TemplateDTO>(false, new Error(ex.Message));
             }
         }
     }

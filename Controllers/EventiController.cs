@@ -11,6 +11,7 @@ using System.Diagnostics.Eventing.Reader;
 
 namespace Identity.Controllers
 {
+    [Route("[controller]")]
     public class EventiController : BaseController
     {
         private readonly GetEventoValidators GetEventoValidators;

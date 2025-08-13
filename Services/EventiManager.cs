@@ -745,11 +745,11 @@ namespace SitoDeiSiti.Backend.Services
                 sb.AppendLine("</table>");
 
                 //replace lista iscrizioni su template
-                template.TemplateBodyHtml = template.TemplateBodyHtml.Replace("{{ListaIscrizioni}}", sb.ToString());
+                template.TemplateBodyHtml = template.TemplateBodyHtml!.Replace("{{ListaIscrizioni}}", sb.ToString());
                 //replace totale su template
-                template.TemplateBodyHtml = template.TemplateBodyHtml.Replace("{{ImportoTotaleIscrizioni}}", totale.ToString("C"));
+                template.TemplateBodyHtml = template.TemplateBodyHtml!.Replace("{{ImportoTotaleIscrizioni}}", totale.ToString("C"));
 
-                var pdf = new PDFGenerator(template.TemplateBodyHtml.ToString(), template.TemplateHeaderHtml, template.TemplateFooterHtml);
+                var pdf = new PDFGenerator(template.TemplateBodyHtml!.ToString(), template.TemplateHeaderHtml, template.TemplateFooterHtml);
 
                 byte[]? pdfBytes = pdf.GeneratePDF();
 

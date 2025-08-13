@@ -14,6 +14,7 @@ using System.Security.Claims;
 
 namespace Identity.Controllers
 {
+    [Route("[controller]")]
     public class UserController : BaseController
     {
         private readonly CreateNewUserValidator NewUserValidator;
