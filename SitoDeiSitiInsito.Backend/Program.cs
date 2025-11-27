@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using SitoDeiSiti.Backend.Interfaces;
 using SitoDeiSiti.Backend.Services;
 using SitoDeiSiti.DAL;
@@ -45,19 +45,19 @@ builder.Services.AddSwaggerGen(
             Scheme = JwtBearerDefaults.AuthenticationScheme,
             Description = "Put **_ONLY_** your JWT Bearer token on textbox below!",
 
-            Reference = new OpenApiReference
-            {
-                Id = JwtBearerDefaults.AuthenticationScheme,
-                Type = ReferenceType.SecurityScheme
-            }
+            //Reference = new OpenApiReference
+            //{
+            //    Id = JwtBearerDefaults.AuthenticationScheme,
+            //    Type = ReferenceType.SecurityScheme
+            //}
         };
 
-        setup.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
+        //setup.AddSecurityDefinition(jwtSecurityScheme.Reference.Id, jwtSecurityScheme);
 
-        setup.AddSecurityRequirement(new OpenApiSecurityRequirement
-        {
-        { jwtSecurityScheme, Array.Empty<string>() }
-        });
+        //setup.AddSecurityRequirement(new OpenApiSecurityRequirement
+        //{
+        //{ jwtSecurityScheme, Array.Empty<string>() }
+        //});
 
     }
 );
