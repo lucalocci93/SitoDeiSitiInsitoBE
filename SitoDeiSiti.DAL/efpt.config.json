@@ -1,0 +1,126 @@
+﻿{
+   "CodeGenerationMode": 5,
+   "ContextClassName": "SitoDeiSitiInsitoContext",
+   "ContextNamespace": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": false,
+   "MinimumProductVersion": "2.6.0",
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Models",
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "SitoDeiSiti.DAL",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 2,
+   "SelectedToBeGenerated": 0,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "[dbo].[Abbonamento]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Categoria]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Cinture]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Documento]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Evento]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Gare]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Grafiche]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[IscrizioneEvento]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Notifica]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Organizzazioni]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Pagine]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Redirezioni]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Template]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TipoAbbonamento]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[TipoDocumento]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Utente]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[UtenteAtleta]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[UtenteInfo]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[UtentePrivacy]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Video]",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": null,
+   "UncountableWords": null,
+   "UseAsyncStoredProcedureCalls": true,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDatabaseNamesForRoutines": true,
+   "UseDateOnlyTimeOnly": false,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": false,
+   "UseInternalAccessModifiersForSprocsAndFunctions": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UsePrefixNavigationNaming": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false,
+   "UseT4Split": false
+}
